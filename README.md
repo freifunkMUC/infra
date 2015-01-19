@@ -8,4 +8,4 @@ Currently packaged:
 
 You can install packages for example like this:
 
-  nix-env -f default.nix -iA fastd
+    nix-env -f default.nix -iA fastd

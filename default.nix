@@ -11,6 +11,8 @@ let
     ecdsautils = callPackage ./pkgs/ecdsautils { };
 
     fastd = callPackage ./pkgs/fastd { };
+
+    fastd-fpletz = callPackage ./pkgs/fastd/fpletz.nix { };
   };
 in
 self
