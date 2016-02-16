@@ -3,6 +3,7 @@
 {
   imports = [
     ../modules/default.nix
+    ../modules/smartos-kvm.nix
     ../modules/gateway.nix
   ];
 

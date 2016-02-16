@@ -12,8 +12,8 @@ let
   buildTarget = c: let build = buildEnv c; in
     if onlySystem then build.system else build.vm;
 
-  hosts = import ./hosts;
-
 in
 
-lib.mapAttrs (k: v: buildTarget v) hosts
+{
+  testgw = buildTarget (import ./hosts/testgw.nix);
+}
