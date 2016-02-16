@@ -1,0 +1,5 @@
+{ ... }:
+
+{
+  virtualisation.graphics = false;
+}
