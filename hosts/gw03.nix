@@ -32,6 +32,8 @@ in
     defaultGateway6 = "2001:608:a01:1::1";
   };
 
+  services.openvpn.servers = secrets.openvpn;
+
   users.extraUsers.root.password = secrets.rootPassword;
 }
 
