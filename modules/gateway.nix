@@ -8,6 +8,40 @@ let
   cfg = config.gateway;
 
   genMacAddr = prefix: "${prefix}:${cfg.baseMacAddress}";
+
+  mkFastd = { interface, mtu, bind, secret, macPrefix }:
+    {
+      description = "fastd tunneling daemon for ${interface}";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+
+      script = ''
+        mkdir -p /run/fastd
+        rm -f /run/fastd/${interface}.sock
+        chown nobody:nogroup /run/fastd
+
+        exec ${ffpkgs.fastd}/bin/fastd \
+          --status-socket /run/fastd/${interface}.sock \
+          --user nobody \
+          --group nogroup \
+          --log-level verbose \
+          --mode tap \
+          --interface "${interface}" \
+          --mtu ${mtu} \
+          --bind ${bind} \
+          --method salsa2012+umac \
+          --on-up '${pkgs.iproute}/bin/ip link set "${interface}" address ${genMacAddr macPrefix} up; ${pkgs.batctl}/bin/batctl -m bat0 if add "${interface}"; systemctl start bat0-netdev.service;' \
+          --on-verify "true" \
+          --config ${pkgs.writeText "fastd-mesh-vpn" ''
+            secret "${cfg.fastdSecret}";
+          ''} \
+          --config-peer ${pkgs.writeText "gw05" ''
+            key "2242fe7fff1def15233a364487545e57c3c69e1b624d97bd5d72359b9851cb6e";
+            float yes;
+          ''}
+      '';
+    };
+
 in
 
 {
@@ -120,6 +154,10 @@ in
             ip46tables -I nixos-fw 3 -i br0 -p udp --dport 53 -j nixos-fw-accept
             ip46tables -I nixos-fw 3 -i br0 -p tcp --dport 53 -j nixos-fw-accept
             ip46tables -I nixos-fw 3 -i enp0s3 -p udp --dport 10000 -j nixos-fw-accept
+            ip46tables -I nixos-fw 3 -i enp0s3 -p udp --dport 10001 -j nixos-fw-accept
+            ip46tables -I nixos-fw 3 -i enp0s3 -p udp --dport 10098 -j nixos-fw-accept
+            ip46tables -I nixos-fw 3 -i enp0s3 -p udp --dport 10099 -j nixos-fw-accept
+            ip46tables -I nixos-fw 3 -i enp0s3 -p udp --dport 9999 -j nixos-fw-accept
 
             ip46tables -F FORWARD
             ip46tables -P FORWARD DROP
@@ -129,6 +167,11 @@ in
 
             iptables -t nat -F POSTROUTING
             iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
+            ip46tables -t nat -A PREROUTING -i enp0s3 -p udp -m udp --dport 10000 -m u32 --u32 "0xc&0x1=0x1" -j REDIRECT --to-ports 10099
+            ip46tables -t nat -A PREROUTING -i enp0s3 -p udp -m udp --dport 10001 -m u32 --u32 "0xc&0x1=0x1" -j REDIRECT --to-ports 10098
+
+            ip46tables -t mangle -F POSTROUTING
+            ip46tables -t mangle -A POSTROUTING -o tun0 -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1200
           '';
         };
         dhcpcd.allowInterfaces = [ "enp0s3" "eth0" ];
@@ -179,6 +222,7 @@ in
         description = "Alfred daemon";
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
+        requires = [ "bat0-netdev.service" ];
 
         script = "exec ${pkgs.alfred}/bin/alfred -i bat0 -b bat0 -u /run/alfred.sock";
       };
@@ -190,41 +234,40 @@ in
 
         script = "exec ${pkgs.alfred}/bin/batadv-vis -i bat0 /run/alfred.sock -s";
       };
-      fastd = {
-        description = "fastd tunneling daemon";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-
-        script = ''
-          mkdir -p /run/fastd
-          chown nobody:nogroup /run/fastd
-
-          exec ${ffpkgs.fastd}/bin/fastd \
-            --status-socket /run/fastd/mesh-vpn.sock \
-            --user nobody \
-            --group nogroup \
-            --log-level verbose \
-            --mode tap \
-            --interface mesh-vpn \
-            --mtu 1426 \
-            --bind any:10000 \
-            --method salsa2012+umac \
-            --on-up '${pkgs.iproute}/bin/ip link set mesh-vpn address ${genMacAddr "f2"} up; ${pkgs.batctl}/bin/batctl -m bat0 if add mesh-vpn; systemctl start bat0-netdev.service;' \
-            --on-verify "true" \
-            --config ${pkgs.writeText "fastd-mesh-vpn" ''
-              secret "${cfg.fastdSecret}";
-            ''} \
-            --config-peer ${pkgs.writeText "fastd-peer-gw04" ''
-              key "adee58f70829e6a03e568ca8273070b38c1b4cfe0beb69c53eea429646908126";
-              float no;
-              remote "gw04.ffmuc.net" port 9999;
-            ''}
-            --config-peer ${pkgs.writeText "fastd-peer-gw05" ''
-              key "2242fe7fff1def15233a364487545e57c3c69e1b624d97bd5d72359b9851cb6e";
-              float no;
-              remote "gw05.ffmuc.net" port 9999;
-            ''}
-        '';
+      fastd-mesh0 = mkFastd {
+        interface = "mesh-vpn0";
+        mtu = "1426";
+        bind = "any:10000";
+        macPrefix = "f2";
+        secret = cfg.fastdSecret;
+      };
+      fastd-mesh1 = mkFastd {
+        interface = "mesh-vpn1";
+        mtu = "1426";
+        bind = "any:10099";
+        macPrefix = "f6";
+        secret = cfg.fastdSecret;
+      };
+      fastd-mesh0-1280 = mkFastd {
+        interface = "mesh-vpn0-1280";
+        mtu = "1280";
+        bind = "any:10001";
+        macPrefix = "e2";
+        secret = cfg.fastdSecret;
+      };
+      fastd-mesh1-1280 = mkFastd {
+        interface = "mesh-vpn1-1280";
+        mtu = "1280";
+        bind = "any:10098";
+        macPrefix = "e6";
+        secret = cfg.fastdSecret;
+      };
+      fastd-backbone = mkFastd {
+        interface = "backbone-vpn";
+        mtu = "1426";
+        bind = "any:9999";
+        macPrefix = "f4";
+        secret = cfg.fastdSecret;
       };
     };
 
