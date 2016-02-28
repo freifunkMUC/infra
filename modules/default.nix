@@ -53,7 +53,16 @@
           '';
       };
 
+    environment.systemPackages = with pkgs;
+      [ vim htop
+        tcpdump iptables jnettop
+      ];
+
+    programs.bash.enableCompletion = true;
+
     hardware.pulseaudio.enable = false;
+
+    fonts.fontconfig.enable = false;
 
     security =
       { polkit.enable = false;

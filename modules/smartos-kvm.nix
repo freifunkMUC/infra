@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports =
@@ -15,7 +15,7 @@
 
     fileSystems."/" =
       { device = "/dev/vg0/nixos";
-        fsType = "xfs";
+        fsType = lib.mkDefault "xfs";
       };
   };
 }
