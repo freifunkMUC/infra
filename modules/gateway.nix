@@ -331,7 +331,6 @@ in
           };
         collectd =
           { enable = true;
-            package = pkgs.collectdMinimal;
             extraConfig = ''
               FQDNLookup true
               Interval 30
