@@ -15,7 +15,7 @@
 
     fileSystems."/" =
       { device = "/dev/vg0/nixos";
-        fsType = lib.mkDefault "xfs";
+        fsType = lib.mkDefault "ext4";
       };
   };
 }

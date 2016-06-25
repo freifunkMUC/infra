@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   config = {
@@ -54,7 +54,7 @@
       };
 
     environment.systemPackages = with pkgs;
-      [ vim htop
+      [ vim htop git ethtool python3
         tcpdump iptables jnettop
       ];
 
@@ -70,6 +70,7 @@
       };
 
     users.mutableUsers = false;
+    users.extraUsers.root.password = lib.mkDefault "";
     users.extraUsers.root.openssh.authorizedKeys.keys =
       [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK20Lv3TggAXcctelNGBxjcQeMB4AqGZ1tDCzY19xBUV fpletz"
         "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA5PD0xVViVQd5qgE2E4iC8ZWLIg8rmhz1Zb7NJgcA/uwvLTsc1aNW5c16qVWQot37EMHTeh1emr6C0oqNXSOsLWlOfcIHuV/QlVFhxiFZjCv/MWenb2US0mS9po7OS1v+zDAfotb2uUf2MPuaOEcnzToCUu4fa2Guh6YqislWfdFJRbA6rHZtWR48t1cJjhYI5KuF4Y2ef3yMDohTBXcA+oy8rKEfrCJuUaxzqlJPzKRsu1i0mooOvIehBUxAecmRBruBnamTf2NYestshazVkFKnUFf9gk25t6dVuT4UiMjBZdT6lqlbyW+RUtJTa6t65oUj4WfSp9Qt5GS172Ko0w== ruebezahl"
