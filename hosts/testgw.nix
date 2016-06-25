@@ -64,7 +64,5 @@
     dhcpcd.allowInterfaces = [ "eth0" ];
   };
 
-  virtualisation.graphics = false;
-
   users.extraUsers.root.password = "";
 }
