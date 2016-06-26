@@ -152,9 +152,20 @@ in
             listenPort = 10089;
             mtu = 1426;
           };
+          mesh3 = {
+            inherit secret listenAddress;
+            listenPort = 10015;
+            mtu = 1280;
+          };
+          mesh4 = {
+            inherit secret listenAddress;
+            listenPort = 10085;
+            mtu = 1280;
+          };
         };
         portBalancings = [
           { from = 10011; to = 10089; }
+          { from = 10015; to = 10085; }
         ];
       };
      };
