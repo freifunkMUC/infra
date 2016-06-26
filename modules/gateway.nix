@@ -100,6 +100,16 @@ in
               default = [];
             };
 
+            ra.prefixes = mkOption {
+              type = types.listOf types.str;
+              default = [];
+            };
+
+            ra.rdnss = mkOption {
+              type = types.listOf types.str;
+              default = [];
+            };
+
             fastdConfigs = mkOption {
               type = types.attrsOf (types.submodule {
                 options = {
@@ -380,6 +390,30 @@ in
                 hide-version: yes
                 log-queries: no
             '';
+          };
+        radvd = let
+          config = concatSegments (name: scfg:
+            lib.optionalString (scfg.ra.prefixes != []) ''
+              interface br-${name} {
+                AdvSendAdvert on;
+                MaxRtrAdvInterval 300;
+
+                ${concatStrings (map (prefix: ''
+                  prefix ${prefix} {
+                    AdvValidLifetime 600;
+                    AdvPreferredLifetime 150;
+                    DeprecatePrefix on;
+                  };
+                '') scfg.ra.prefixes)}
+
+                ${concatStrings (map (dns: ''
+                  RDNSS ${dns} { };
+                '') scfg.ra.rdnss)}
+              };
+          '');
+          in
+          { enable = (config != "");
+            inherit config;
           };
         collectd =
           { enable = true;

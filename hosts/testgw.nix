@@ -41,6 +41,8 @@
           ip6 = [ { address = "fdef::1"; prefixLength = 64; } ];
         };
         dhcpRanges = [ "10.81.1.0,10.81.31.255,255.255.0.0,1h" ];
+        ra.prefixes = [ "fdef::/64" ];
+        ra.rdnss = [ "fdef::1" ];
         fastdConfigs = {
           backbone = {
             listenAddress = "0.0.0.0";
