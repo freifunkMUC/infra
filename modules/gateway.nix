@@ -103,9 +103,13 @@ in
             fastdConfigs = mkOption {
               type = types.attrsOf (types.submodule {
                 options = {
-                  bind = mkOption {
+                  listenAddress = mkOption {
                     type = types.str;
-                    default = "0.0.0.0:10000";
+                    default = "0.0.0.0";
+                  };
+                  listenPort = mkOption {
+                    type = types.int;
+                    default = 10000;
                   };
                   mac = mkOption {
                     type = types.nullOr types.str;
@@ -205,29 +209,29 @@ in
 
     networking =
       { firewall = {
-          allowedTCPPorts = [ 22 5201 ];
+          allowedTCPPorts = [ 5201 ];
           checkReversePath = false;
           extraCommands = ''
             ${concatSegments (name: scfg: ''
               iptables -I nixos-fw 3 -i br-${name} -p udp --dport 67:68 --sport 67:68 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
-            '')}
 
-            ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport 10000 -j nixos-fw-accept
-            ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport 10001 -j nixos-fw-accept
-            ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport 10098 -j nixos-fw-accept
-            ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport 10099 -j nixos-fw-accept
-            ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport 9999 -j nixos-fw-accept
+              ${concatStrings (mapAttrsToList (name: fcfg: ''
+                ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport ${toString fcfg.listenPort} -j nixos-fw-accept
+              '') scfg.fastdConfigs)}
+            '')}
 
             ip46tables -F FORWARD
-            ip46tables -P FORWARD ACCEPT
-            #ip46tables -P FORWARD DROP
+            ip46tables -P FORWARD DROP
             ${concatSegments (name: scfg: ''
-              #iptables -A FORWARD -i br-${name} -o ${cfg.ip4Interface} -j ACCEPT
-              #iptables -A FORWARD -i ${cfg.ip4Interface} -o br-${name} -j ACCEPT
+              iptables -A FORWARD -i br-${name} -o ${cfg.ip4Interface} -j ACCEPT
+              iptables -A FORWARD -i ${cfg.ip4Interface} -o br-${name} -j ACCEPT
+              ip6tables -A FORWARD -i br-${name} -o ${cfg.ip6Interface} -j ACCEPT
+              ip6tables -A FORWARD -i ${cfg.ip6Interface} -o br-${name} -j ACCEPT
             '')}
-            #iptables -A FORWARD -j REJECT --reject-with icmp-net-prohibited
+            iptables -A FORWARD -j REJECT --reject-with icmp-admin-prohibited
+            ip6tables -A FORWARD -j REJECT --reject-with icmp6-adm-prohibited
 
             iptables -t nat -F POSTROUTING
             iptables -t nat -A POSTROUTING -o ${cfg.ip4Interface} -j MASQUERADE
@@ -297,7 +301,8 @@ in
         };
       } // (fold (a: b: a // b) {} (mapAttrsToList (interface: fcfg: {
         "fastd-${name}-${interface}" = mkFastd {
-          inherit (fcfg) bind secret mac mtu;
+          inherit (fcfg) secret mac mtu;
+          bind = "${fcfg.listenAddress}:${toString fcfg.listenPort}";
           interface = "${name}-${interface}";
           segment = name;
         };

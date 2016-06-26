@@ -22,7 +22,8 @@
         dhcpRanges = [ "10.80.1.0,10.80.7.255,255.255.224.0,1h" ];
         fastdConfigs = {
           backbone = {
-            bind = "0.0.0.0:9999";
+            listenAddress = "0.0.0.0";
+            listenPort = 9999;
             mtu = 1428;
             # fastd public: cc702a59de69623c2bb759a3c9dcac19c24e3ca597387b8463f8d130a6f640c0
             secret = "f026925227659628400350407340eef4e155d0db1fd85d41c9f86764cba91c6a";
@@ -42,7 +43,8 @@
         dhcpRanges = [ "10.81.1.0,10.81.31.255,255.255.0.0,1h" ];
         fastdConfigs = {
           backbone = {
-            bind = "0.0.0.0:9998";
+            listenAddress = "0.0.0.0";
+            listenPort = 9998;
             mtu = 1428;
             # fastd public: cc702a59de69623c2bb759a3c9dcac19c24e3ca597387b8463f8d130a6f640c0
             secret = "f026925227659628400350407340eef4e155d0db1fd85d41c9f86764cba91c6a";
