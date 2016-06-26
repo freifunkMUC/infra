@@ -1,13 +1,14 @@
-{ stdenv, fetchgit, cmake, pkgconfig, libuecc }:
+{ stdenv, fetchFromGitHub, cmake, pkgconfig, libuecc }:
 
 stdenv.mkDerivation rec {
   version = "0.3.2";
   name = "ecdsautils-${version}";
 
-  src = fetchgit {
-    url = "https://github.com/tcatm/ecdsautils.git";
-    rev = "refs/tags/v${version}";
-    sha256 = "0510v8r499hc7n8np5szfvqznam35x36xcqz1h1i7gd76d1lxld1";
+  src = fetchFromGitHub {
+    owner = "tcatm";
+    repo = "ecdsautils";
+    rev = "v${version}";
+    sha256 = "03p8pb9fd020fcqwxw4zhvfjv6cczw8hxqa4m9ldjh1iwqfhgrlj";
   };
 
   buildInputs = [ cmake pkgconfig libuecc ];
