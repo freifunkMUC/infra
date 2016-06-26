@@ -1,13 +1,13 @@
 { stdenv, fetchgit, cmake, bison, pkgconfig, libuecc, libsodium, libcap, json_c }:
 
 stdenv.mkDerivation rec {
-  version = "17";
+  version = "18";
   name = "fastd-${version}";
 
   src = fetchgit {
     url = "git://git.universe-factory.net/fastd";
     rev = "refs/tags/v${version}";
-    sha256 = "1xpazdpx0bzbkzqfvy5sbdg6hrk93179kvkgckg7z2cp1v9b21sy";
+    sha256 = "0c9v3igv3812b3jr7jk75a2np658yy00b3i4kpbpdjgvqzc1jrq8";
   };
 
   nativeBuildInputs = [ pkgconfig bison cmake ];
