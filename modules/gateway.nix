@@ -70,6 +70,12 @@ in
         example = "eth1";
       };
 
+      networkingLocalCommands = mkOption {
+        type = types.lines;
+        description = "Commands to add to networking.localCommands";
+        default = "";
+      };
+
       segments = mkOption {
         type = types.attrsOf (types.submodule {
           options = {
@@ -268,6 +274,8 @@ in
           ${concatSegments (name: scfg: ''
             ip rule add iif br-${name} lookup 42
           '')}
+
+          ${cfg.networkingLocalCommands}
         '';
       };
 
