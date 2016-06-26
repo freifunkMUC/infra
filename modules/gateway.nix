@@ -240,6 +240,7 @@ in
 
             ip46tables -F FORWARD
             ip46tables -P FORWARD DROP
+            ip46tables -A FORWARD -i br-+ -o br-+ -j ACCEPT
             ${concatSegments (name: scfg: ''
               iptables -A FORWARD -i br-${name} -o ${cfg.ip4Interface} -j ACCEPT
               iptables -A FORWARD -i ${cfg.ip4Interface} -o br-${name} -j ACCEPT
@@ -249,6 +250,7 @@ in
             iptables -A FORWARD -j REJECT --reject-with icmp-admin-prohibited
             ip6tables -A FORWARD -j REJECT --reject-with icmp6-adm-prohibited
 
+            iptables -t nat -F PREROUTING
             iptables -t nat -F POSTROUTING
             iptables -t nat -A POSTROUTING -o ${cfg.ip4Interface} -j MASQUERADE
             ${concatSegments (name: scfg: concatStrings (map ({ from, to }: ''
@@ -299,6 +301,7 @@ in
             ip link set br-${name} down
             ip link set bat-${name} master br-${name}
             ip link set br-${name} up
+            systemctl restart network-addresses-br-${name}.service
             systemctl start alfred-${name}.service batadv-vis-${name}.service
           '';
         };
@@ -307,6 +310,7 @@ in
           after = [ "network.target" ];
 
           script = ''
+            sleep 2
             exec ${pkgs.alfred}/bin/alfred -i br-${name} -b bat-${name} -u /run/alfred-${name}.sock
           '';
         };
@@ -315,7 +319,7 @@ in
           after = [ "alfred-${name}.service" ];
           requires = [ "alfred-${name}.service" ];
 
-          script = "exec ${pkgs.alfred}/bin/batadv-vis -i bat-${name} /run/alfred-${name}.sock -s";
+          script = "exec ${pkgs.alfred}/bin/batadv-vis -s -i bat-${name} -u /run/alfred-${name}.sock";
         };
       } // (fold (a: b: a // b) {} (mapAttrsToList (interface: fcfg: {
         "fastd-${name}-${interface}" = mkFastd {
@@ -384,7 +388,7 @@ in
             extraConfig = ''
               server:
                 port: 54
-                num-threads: 2
+                num-threads: 4
                 msg-cache-size: 16M
                 msg-cache-slabs: 8
                 num-queries-per-thread: 2048
