@@ -1,14 +1,14 @@
 {
   network.description = "ffmuc network";
 
-  gw03 = { config, pkgs, ... }:
+  isartor = { config, pkgs, ... }:
     {
       deployment = {
         targetEnv = "none";
-        targetHost = "195.30.94.49";
+        targetHost = "isartor.ffmuc.net";
       };
 
-      require = [ ./hosts/gw03.nix ];
+      require = [ ./hosts/isartor.nix ];
     };
 
   stachus = { ... }:
