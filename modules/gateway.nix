@@ -225,7 +225,8 @@ in
 
     networking =
       { firewall = {
-          allowedTCPPorts = [ 5201 ];
+          allowedTCPPorts = [ 5201 69 ];
+          allowedUDPPorts = [ 69 ];
           checkReversePath = false;
           extraCommands = ''
             ${concatSegments (name: scfg: ''
@@ -370,16 +371,25 @@ in
               ${concatSegments (name: scfg: ''
                 interface=br-${name}
               '')}
-              no-hosts
+
               dhcp-ignore-names
               dhcp-lease-max=40960
               ${concatSegments (name: scfg: concatMapStrings (range: ''
                 dhcp-range=${range}
               '') scfg.dhcpRanges)}
+
+              no-hosts
+              dns-forward-max=1024
               cache-size=0
               no-negcache
               no-resolv
               server=::1#54
+
+              enable-tftp
+              tftp-root=/var/lib/tftp
+              tftp-secure
+              dhcp-match=set:ipxe,175
+              dhcp-boot=tag:!ipxe,undionly.kpxe
             '';
           };
         unbound =
