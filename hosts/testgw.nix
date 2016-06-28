@@ -22,7 +22,7 @@
         dhcpRanges = [ "10.80.1.0,10.80.7.255,255.255.224.0,1h" ];
         fastdConfigs = {
           backbone = {
-            listenAddress = "0.0.0.0";
+            listenAddresses = [ "any" ];
             listenPort = 9999;
             mtu = 1428;
             # fastd public: cc702a59de69623c2bb759a3c9dcac19c24e3ca597387b8463f8d130a6f640c0
@@ -45,7 +45,7 @@
         ra.rdnss = [ "fdef::1" ];
         fastdConfigs = {
           backbone = {
-            listenAddress = "0.0.0.0";
+            listenAddresses = [ "any" ];
             listenPort = 9998;
             mtu = 1428;
             # fastd public: cc702a59de69623c2bb759a3c9dcac19c24e3ca597387b8463f8d130a6f640c0
