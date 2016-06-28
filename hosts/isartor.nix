@@ -28,9 +28,9 @@ in
 
   freifunk.gateway = {
     enable = true;
-    externalInterface = "eno1";
+    externalInterface = "eno2";
     ip4Interface = "tun0";
-    ip6Interface = "eno1";
+    ip6Interface = "eno2";
     networkingLocalCommands = ''
       ip rule add from 195.30.94.49/32 lookup 5
       ip route replace default via 195.30.94.62 table 5
@@ -51,30 +51,30 @@ in
         ra.rdnss = [ "2001:608:a01:2::13" ];
         fastdConfigs = let
           secret = secrets.fastd.gw03.secret;
-          listenAddress = "195.30.94.49";
+          listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
         in {
           backbone = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 9999;
             mtu = 1426;
           };
           mesh0 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10000;
             mtu = 1426;
           };
           mesh1 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10099;
             mtu = 1426;
           };
           mesh2 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10001;
             mtu = 1280;
           };
           mesh3 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10098;
             mtu = 1280;
           };
@@ -98,25 +98,26 @@ in
         ra.rdnss = [ "2001:608:a01:3::12" ];
         fastdConfigs = let
           secret = secrets.fastd.gwf02.secret;
-          listenAddress = "195.30.94.49";
+          listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
+
         in {
           mesh0 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 11000;
             mtu = 1426;
           };
           mesh1 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 11099;
             mtu = 1426;
           };
           mesh2 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 11001;
             mtu = 1280;
           };
           mesh3 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 11098;
             mtu = 1280;
           };
@@ -140,25 +141,25 @@ in
         ra.rdnss = [ "2001:608:a01:4::12" ];
         fastdConfigs = let
           secret = secrets.fastd.gwu02.secret;
-          listenAddress = "195.30.94.49";
+          listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
         in {
           mesh0 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10011;
             mtu = 1426;
           };
           mesh1 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10089;
             mtu = 1426;
           };
           mesh3 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10015;
             mtu = 1280;
           };
           mesh4 = {
-            inherit secret listenAddress;
+            inherit secret listenAddresses;
             listenPort = 10085;
             mtu = 1280;
           };
@@ -175,14 +176,14 @@ in
     hostName = "isartor";
     interfaces.eno2 = {
       ip4 = [ { address = "195.30.94.27"; prefixLength = 29; } ];
-      ip6 = [ { address = "2001:608:a01::2"; prefixLength = 64; } ];
+      ip6 = [ { address = "2001:608:a01::1"; prefixLength = 64; } ];
     };
     interfaces.eno1 = {
       ip4 = [ { address = "195.30.94.49"; prefixLength = 28; } ];
       ip6 = [ { address = "2001:608:a01:1::2"; prefixLength = 64; } ];
     };
     defaultGateway = "195.30.94.30";
-    defaultGateway6 = "2001:608:a01:1::1";
+    defaultGateway6 = "2001:608:a01::ffff";
     firewall.extraCommands = ''
       ip46tables -I nixos-fw 3 -i eno2 -p tcp --dport 655 -j nixos-fw-accept
       ip46tables -I nixos-fw 3 -i eno2 -p udp --dport 655 -j nixos-fw-accept

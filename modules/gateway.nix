@@ -31,7 +31,8 @@ let
           --mode tap \
           --interface "${interface}" \
           --mtu ${toString mtu} \
-          --bind ${bind} \
+          ${concatMapStrings (b: ''
+            --bind '${b}' \'') bind}
           --method salsa2012+umac \
           --on-up '${pkgs.iproute}/bin/ip link set "${interface}" ${lib.optionalString (mac != null) "address ${mac}"} up; ${pkgs.batctl}/bin/batctl -m bat-${segment} if add "${interface}"; systemctl start bat-${segment}-netdev.service;' \
           --on-verify "true" \
@@ -119,9 +120,9 @@ in
             fastdConfigs = mkOption {
               type = types.attrsOf (types.submodule {
                 options = {
-                  listenAddress = mkOption {
-                    type = types.str;
-                    default = "0.0.0.0";
+                  listenAddresses = mkOption {
+                    type = types.listOf types.str;
+                    default = [ "any" ];
                   };
                   listenPort = mkOption {
                     type = types.int;
@@ -325,7 +326,7 @@ in
       } // (fold (a: b: a // b) {} (mapAttrsToList (interface: fcfg: {
         "fastd-${name}-${interface}" = mkFastd {
           inherit (fcfg) secret mac mtu;
-          bind = "${fcfg.listenAddress}:${toString fcfg.listenPort}";
+          bind = map (addr: "${addr}:${toString fcfg.listenPort}") fcfg.listenAddresses;
           interface = "${name}-${interface}";
           segment = name;
         };
