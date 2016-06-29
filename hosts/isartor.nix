@@ -29,7 +29,7 @@ in
   freifunk.gateway = {
     enable = true;
     externalInterface = "eno2";
-    ip4Interface = "tun0";
+    ip4Interfaces = [ "tun0" "eno1" ];
     ip6Interface = "eno2";
     networkingLocalCommands = ''
       ip rule add from 195.30.94.49/32 lookup 5

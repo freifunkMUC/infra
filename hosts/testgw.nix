@@ -10,7 +10,7 @@
   freifunk.gateway = {
     enable = true;
     externalInterface = "eth0";
-    ip4Interface = "tun0";
+    ip4Interfaces = [ "tun0" "eth1" ];
     ip6Interface = "eth1";
     segments = {
       ffmuc = {
