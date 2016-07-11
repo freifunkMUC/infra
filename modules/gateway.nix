@@ -143,7 +143,7 @@ in
                   };
                 };
               });
-              description = "Configurion for fastd daemons";
+              description = "Configuration for fastd daemons";
             };
           };
         });
@@ -218,8 +218,21 @@ in
             "net.ipv4.conf.all.log_martians" = 1;
             # Decrease connection tracking timeouts
             "net.netfilter.nf_conntrack_generic_timeout" = 300;
-            "net.netfilter.nf_conntrack_tcp_timeout_established" = 3600;
             "net.netfilter.nf_conntrack_expect_max" = 8192;
+            "net.netfilter.nf_conntrack_tcp_max_retrans" = 2;
+            "net.netfilter.nf_conntrack_tcp_timeout_close" = 5;
+            "net.netfilter.nf_conntrack_tcp_timeout_close_wait" = 30;
+            "net.netfilter.nf_conntrack_tcp_timeout_established" = 3600;
+            "net.netfilter.nf_conntrack_tcp_timeout_fin_wait" = 60;
+            "net.netfilter.nf_conntrack_tcp_timeout_last_ack" = 15;
+            "net.netfilter.nf_conntrack_tcp_timeout_max_retrans" = 300;
+            "net.netfilter.nf_conntrack_tcp_timeout_syn_recv" = 30;
+            "net.netfilter.nf_conntrack_tcp_timeout_syn_sent" = 60;
+            "net.netfilter.nf_conntrack_tcp_timeout_time_wait" = 60;
+            "net.netfilter.nf_conntrack_tcp_timeout_unacknowledged" = 120;
+            "net.netfilter.nf_conntrack_udp_timeout" = 20;
+            "net.netfilter.nf_conntrack_udp_timeout_stream" = 180;
+            "net.ipv4.netfilter.ip_conntrack_max" = 500000;
           };
       };
 
