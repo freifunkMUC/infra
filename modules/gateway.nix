@@ -183,12 +183,11 @@ in
             "net.ipv4.conf.default.rp_filter" = 2;
             "net.ipv4.conf.all.rp_filter" = 2;
             # Increase Linux autotuning TCP buffer limits
-            # Set max to 16MB for 1GE
-            "net.core.rmem_max" = 16777216;
-            "net.core.wmem_max" = 16777216;
-            "net.core.rmem_default" = 16777216;
-            "net.core.wmem_default" = 16777216;
-            "net.core.optmem_max" = 40960;
+            "net.core.rmem_max" = 33554432;
+            "net.core.wmem_max" = 33554432;
+            "net.core.rmem_default" = 33554432;
+            "net.core.wmem_default" = 33554432;
+            "net.core.optmem_max" = 1048576;
             "net.ipv4.tcp_rmem" = "4096 87380 16777216";
             "net.ipv4.tcp_wmem" = "4096 65536 16777216";
             # Make room for more TIME_WAIT sockets due to more clients,
@@ -200,13 +199,13 @@ in
             "net.ipv4.tcp_tw_reuse" = 1;
             "net.ipv4.tcp_fin_timeout" = 10;
             # Increase garbage collection thresholds for neighbor tables
-            "net.ipv4.neigh.default.gc_thresh1" = 8192;
-            "net.ipv4.neigh.default.gc_thresh2" = 9216;
-            "net.ipv4.neigh.default.gc_thresh3" = 10240;
-            "net.ipv6.neigh.default.gc_thresh1" = 8192;
-            "net.ipv6.neigh.default.gc_thresh2" = 9216;
-            "net.ipv6.neigh.default.gc_thresh3" = 10240;
-            "net.ipv6.route.gc_thresh" = 10240;
+            "net.ipv4.neigh.default.gc_thresh1" = 20000;
+            "net.ipv4.neigh.default.gc_thresh2" = 25000;
+            "net.ipv4.neigh.default.gc_thresh3" = 30000;
+            "net.ipv6.neigh.default.gc_thresh1" = 20000;
+            "net.ipv6.neigh.default.gc_thresh2" = 25000;
+            "net.ipv6.neigh.default.gc_thresh3" = 30000;
+            "net.ipv6.route.gc_thresh" = 30000;
             # Disable TCP slow start on idle connections
             "net.ipv4.tcp_slow_start_after_idle" = 0;
             # Disable source routing and redirects
