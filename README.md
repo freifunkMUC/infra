@@ -15,6 +15,15 @@ You can easily bring up a test gateway locally using `qemu` with:
 
 Please ensure you're on the latest unstable or 16.03 nixpkgs channel.
 
+## Secrets
+
+Some configuration options like private keys or vpn configs have to be
+private. These are available in a separate repository where the admins
+have access.
+
+You can use the folder `secrets-template` as a starting point for your
+own `secrets` folder.
+
 ## Packages
 
 Currently packaged:
