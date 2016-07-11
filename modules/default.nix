@@ -46,6 +46,8 @@
               ];
           };
 
+        fail2ban.enable = true;
+
         journald.extraConfig =
           ''
             MaxFileSec=1day
@@ -54,8 +56,9 @@
       };
 
     environment.systemPackages = with pkgs;
-      [ vim htop git ethtool python3
-        tcpdump iptables jnettop
+      [ vim htop git ethtool python3 perf-tools
+        tcpdump iptables jnettop iotop nmap
+        rxvt_unicode.terminfo
       ];
 
     programs.bash.enableCompletion = true;
