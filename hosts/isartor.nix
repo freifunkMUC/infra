@@ -44,6 +44,7 @@ in
           ip4 = [ { address = "10.80.32.13"; prefixLength = 19; } ];
           ip6 = [
             { address = "fdef:ffc0:4fff::13"; prefixLength = 64; }
+            { address = "fdef:ffc0:4fff::131"; prefixLength = 64; }
             { address = "2001:608:a01:2::13"; prefixLength = 64; }
           ];
         };
@@ -175,6 +176,7 @@ in
 
   networking = {
     hostName = "isartor";
+    allowedUDPPorts = [ 123 ];
     interfaces.eno2 = {
       ip4 = [ { address = "195.30.94.27"; prefixLength = 29; } ];
       ip6 = [ { address = "2001:608:a01::1"; prefixLength = 64; } ];
@@ -216,27 +218,17 @@ in
     };
   };
 
-  systemd.services = {
-    babeld = let
-      babeldConf = pkgs.writeText "babeld.conf" ''
-        redistribute ip ::/0 le 0 proto 3 metric 128
-        redistribute ip 2001:608:a01::/48 le 127 metric 128
-        redistribute ip fdef:ffc0:4fff::/48 le 127 metric 128
-        redistribute local deny
-        redistribute deny
-        in ip 0.0.0.0/32 le 0 deny
-        in ip ::/128 le 0 deny
+  services.chrony =
+    { extraConfig = ''
+        bindaddress fdef:ffc0:4fff::3
+        bindaddress fdef:ffc0:4fff::131
+        bindaddress 10.80.32.13
+        allow 10.80/16
+        allow fdef:ffc0:4fff::/48
+        allow 2001:470:7ca1::/48
       '';
-      in {
-        description = "Babel routing daemon";
-        wantedBy = [ "network.target" "multi-user.target" ];
-        after = [ "tinc.backbone" ];
-        serviceConfig = {
-          ExecStart =
-            "${pkgs.babeld}/bin/babeld -c ${babeldConf} tinc.backbone";
-        };
-      };
-  };
+    };
+
 
   services.openvpn.servers = secrets.openvpn;
 
