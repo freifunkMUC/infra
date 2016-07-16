@@ -10,15 +10,5 @@
 
       require = [ ./hosts/isartor.nix ];
     };
-
-  stachus = { ... }:
-    {
-      deployment = {
-        targetEnv = "none";
-        targetHost = "195.30.94.61";
-      };
-
-      require = [ ./hosts/stachus.nix ];
-    };
 }
 
