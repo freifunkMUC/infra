@@ -397,6 +397,8 @@ in
               ${concatSegments (name: scfg: ''
                 interface=br-${name}
               '')}
+              port = 0
+              dhcp-option=6,10.80.32.13
 
               dhcp-ignore-names
               dhcp-lease-max=40960
@@ -409,7 +411,7 @@ in
               cache-size=0
               no-negcache
               no-resolv
-              server=::1#54
+              server=::1#53
 
               enable-tftp
               tftp-root=/var/lib/tftp
@@ -420,11 +422,13 @@ in
           };
         unbound =
           { enable = true;
-            allowedAccess = [ "::1" "127.0.0.1" ];
+            allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
+            interfaces = [ "0.0.0.0" "::0" ];
             extraConfig = ''
               server:
-                port: 54
-                num-threads: 4
+                port: 53
+                interface-automatic: yes
+                num-threads: 8
                 msg-cache-size: 16M
                 msg-cache-slabs: 8
                 num-queries-per-thread: 2048
