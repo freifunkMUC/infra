@@ -1,7 +1,8 @@
 { config, pkgs, ... }:
 
 let
-  secrets = (import ../secrets);
+  secrets = (import ../secrets) { inherit pkgs; };
+  ffpkgs = (import ../pkgs/default.nix) { };
 in
 
 {
@@ -45,6 +46,7 @@ in
           ip4 = [ { address = "10.80.32.13"; prefixLength = 19; } ];
           ip6 = [
             { address = "fdef:ffc0:4fff::13"; prefixLength = 64; }
+            { address = "fdef:ffc0:4fff::130"; prefixLength = 64; }
             { address = "fdef:ffc0:4fff::131"; prefixLength = 64; }
             { address = "2001:608:a01:2::13"; prefixLength = 64; }
           ];
@@ -177,7 +179,6 @@ in
 
   networking = {
     hostName = "isartor";
-    allowedUDPPorts = [ 123 ];
     interfaces.eno2 = {
       ip4 = [ { address = "195.30.94.27"; prefixLength = 29; } ];
       ip6 = [ { address = "2001:608:a01::1"; prefixLength = 64; } ];
@@ -186,18 +187,17 @@ in
       ip4 = [ { address = "195.30.94.49"; prefixLength = 28; } ];
       ip6 = [ { address = "2001:608:a01:1::2"; prefixLength = 64; } ];
     };
+
     defaultGateway = "195.30.94.30";
     defaultGateway6 = "2001:608:a01::ffff";
+
+    firewall.allowedTCPPorts = [ 80 443 ];
+    firewall.allowedUDPPorts = [ 123 10100 ];
     firewall.extraCommands = ''
-      ip46tables -I nixos-fw 3 -i eno2 -p tcp --dport 655 -j nixos-fw-accept
-      ip46tables -I nixos-fw 3 -i eno2 -p udp --dport 655 -j nixos-fw-accept
-      ip46tables -I FORWARD 1 -i eno1 -o br-ffmuc -j ACCEPT
-      ip46tables -I FORWARD 1 -i br-ffmuc -o eno1 -j ACCEPT
-      ip6tables -I nixos-fw 3 -i tinc.backbone -m pkttype --pkt-type multicast -j nixos-fw-accept
-      ip46tables -I FORWARD 1 -i eno1 -o tinc.backbone -j ACCEPT
-      ip46tables -I FORWARD 1 -i tinc.backbone -o eno1 -j ACCEPT
-      ip46tables -I FORWARD 1 -i br0 -o tinc.backbone -j ACCEPT
-      ip46tables -I FORWARD 1 -i tinc.backbone -o br0 -j ACCEPT
+      ip6tables -I nixos-fw 3 -i fastd-babel -m pkttype --pkt-type multicast -j nixos-fw-accept
+      ip46tables -I FORWARD 1 -i br-+ -o dn42-+ -j ACCEPT
+      ip46tables -I FORWARD 1 -i dn42-+ -o br-+ -j ACCEPT
+      ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
     '';
   };
 
@@ -205,19 +205,87 @@ in
      tinc_pre babeld
    ];
 
-  services = {
-    tinc.networks = {
-      backbone = {
-        package = pkgs.tinc_pre;
-        interfaceType = "tap";
-        listenAddress = "195.30.94.27";
-        extraConfig = ''
-          Mode = switch
-          ExperimentalProtocol = yes
+  systemd.services = {
+    fastd-babel = {
+      description = "fastd tunneling daemon for babel";
+      wantedBy = [ "network.target" "multi-user.target" ];
+      after = [ "network.target" ];
+      preStart = ''
+        mkdir -p /run/fastd
+        rm -f /run/fastd/babel.sock
+        chown nobody:nogroup /run/fastd
+      '';
+      serviceConfig = {
+        ExecStart = ''
+          ${ffpkgs.fastd}/bin/fastd -c ${pkgs.writeText "fastd-babel.conf" ''
+            user "nobody";
+            group "nogroup";
+            status socket "/run/fastd/babel.sock";
+            log level verbose;
+            mode tap;
+            interface "fastd-babel";
+            mtu 1280;
+            bind 195.30.94.27:10100;
+            bind [2001:608:a01::1]:10100;
+            method "salsa2012+umac";
+            method "null";
+            on verify "true";
+            on up "${pkgs.iproute}/bin/ip link set fastd-babel up; ${pkgs.iproute}/bin/ip addr add 2001:608:a01:bfff::1/64 dev fastd-babel";
+            secret "${secrets.fastd.gw03.secret}";
+          ''}
         '';
       };
     };
+    babeld = let
+      babeldConf = pkgs.writeText "babeld.conf" ''
+        redistribute ip 2001:608:a01::/64 le 127 deny
+        redistribute ip ::/0 le 0 proto 3 metric 128
+        redistribute ip 2001:608:a01::/48 le 127 metric 128
+        redistribute ip fdef:ffc0:4fff::/48 le 127 metric 128
+
+        # only redistribute nets matching the filters above
+        redistribute local deny
+        redistribute deny
+
+        # Don't accept default routes
+        in ip 0.0.0.0/32 le 0 deny
+        in ip ::/128 le 0 deny
+      '';
+      in {
+        description = "Babel routing daemon";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "fastd-babel.service" ];
+        serviceConfig = {
+          ExecStart =
+            "${pkgs.babeld}/bin/babeld -c ${babeldConf} fastd-babel";
+        };
+      };
   };
+
+  services.dhcpd =
+    { enable = true;
+      interfaces = [ "fastd-babel" ];
+      extraFlags = "-6";
+      configFile = pkgs.writeText "dhpcd.conf" ''
+        authoritative;
+        log-facility local1;
+        default-lease-time 600;
+        max-lease-time 7200;
+
+        #option dhcp-renewal-time 3600;
+        #option dhcp-rebinding-time 7200;
+
+        option dhcp6.name-servers 2001:608:a01:bfff::1;
+
+        subnet6 2001:608:a01:b000::/52 {
+          range6 2001:608:a01:b000:f000:: 2001:608:a01:bfff:ffff::;
+          prefix6 2001:608:a01:b000:: 2001:608:a01:bffe:: / 64;
+        }
+
+        #subnet6 fe80::/64 {
+        #}
+      '';
+    };
 
   services.chrony =
     { extraConfig = ''
@@ -226,12 +294,288 @@ in
         bindaddress 10.80.32.13
         allow 10.80/16
         allow fdef:ffc0:4fff::/48
-        allow 2001:470:7ca1::/48
+        allow 2001:608:a01::/48
       '';
     };
 
 
-  services.openvpn.servers = secrets.openvpn;
+  services.bird =
+    { enable = true;
+      config = ''
+protocol device {
+  scan time 10;
+}
+
+router id 10.80.32.13;
+
+define OWNAS = 65080;
+define OWNIP = 10.80.32.13;
+
+table v4direct;
+table v4vpn;
+
+function is_self_net() {
+  return net ~ [
+    10.80.0.0/16+
+  ];
+}
+
+include "${../static/bird_filter_dn42.conf}";
+
+roa table dn42_roa {
+  include "${../static/bird_roa_dn42.conf}";
+};
+
+protocol kernel {
+  scan time 20;
+  device routes;
+  import none;
+  export filter {
+    krt_prefsrc = OWNIP;
+    accept;
+  };
+}
+
+protocol kernel kernel5 {
+  table v4direct;
+  scan time 20;
+  device routes;
+  import none;
+  kernel table 5;
+  export filter {
+    krt_prefsrc = OWNIP;
+    accept;
+  };
+}
+
+protocol kernel kernel42 {
+  table v4vpn;
+  scan time 20;
+  device routes;
+  import none;
+  kernel table 42;
+  export filter {
+    krt_prefsrc = OWNIP;
+    accept;
+  };
+}
+
+protocol pipe pipe5 {
+  peer table v4direct;
+  import none;
+  export all;
+};
+
+protocol pipe pipe42 {
+  peer table v4vpn;
+  import none;
+  export all;
+};
+
+protocol static {
+  route 10.80.32.0/19 via "br-ffmuc";
+  route 10.80.64.0/19 via "br-welcome";
+  route 10.80.96.0/19 via "br-umland";
+}
+
+template bgp dnpeers {
+  local as OWNAS;
+  path metric 1;
+  missing lladdr ignore;
+  import keep filtered;
+  import filter {
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
+       print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+       reject;
+    }
+    if is_valid_network() && !is_self_net() then {
+      accept;
+    }
+    reject;
+  };
+  export filter {
+    if is_valid_network() then {
+      accept;
+    }
+    reject;
+  };
+  route limit 10000;
+}
+
+protocol bgp fpletz from dnpeers {
+  neighbor 172.23.214.1 as 4242420235;
+};
+
+protocol bgp jomat from dnpeers {
+  neighbor 172.23.216.242 as 64773;
+};
+
+protocol bgp chaossbg from dnpeers {
+  neighbor 172.23.171.30 as 4242421420;
+};
+
+protocol bgp AS4242421340 from dnpeers {
+  neighbor 172.20.176.1 as 4242421340;
+};
+
+protocol bgp AS4242420330 from dnpeers {
+  neighbor 172.20.182.1 as 4242420330;
+};
+      '';
+    };
+
+  services.bird6 =
+    { enable = true;
+      config = ''
+protocol device {
+  scan time 10;
+}
+
+router id 10.80.0.13;
+
+define OWNAS = 65080;
+define OWNIP = fdef:ffc0:4fff::13;
+
+function is_self_net() {
+  return net ~ [
+    fdef:ffc0:4fff::/48+,
+    2001:608:a01::/48+
+  ];
+}
+
+include "${../static/bird6_filter_dn42.conf}";
+
+roa table dn42_roa {
+  include "${../static/bird6_roa_dn42.conf}";
+};
+
+protocol kernel {
+  scan time 20;
+  device routes;
+  import none;
+  export filter {
+    krt_prefsrc = OWNIP;
+    accept;
+  };
+}
+
+protocol static {
+  route fdef:ffc0:4fff:0::/64 via "br-ffmuc";
+  route 2001:608:a01:2::/64 via "br-ffmuc";
+  route fdef:ffc0:4fff:1::/64 via "br-welcome";
+  route 2001:608:a01:3::/64 via "br-welcome";
+  route fdef:ffc0:4fff:2::/64 via "br-umland";
+  route 2001:608:a01:4::/64 via "br-umland";
+}
+
+template bgp dnpeers {
+  local as OWNAS;
+  path metric 1;
+  missing lladdr ignore;
+  import keep filtered;
+  import filter {
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
+       print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+       reject;
+    }
+    if is_valid_network() && !is_self_net() then {
+      accept;
+    }
+    reject;
+  };
+  export filter {
+    if is_valid_network() then {
+      accept;
+    }
+    reject;
+  };
+  route limit 10000;
+}
+
+protocol bgp fpletz from dnpeers {
+  neighbor fe80::1 % 'dn42-fpletz' as 4242420235;
+};
+
+protocol bgp jomat from dnpeers {
+  neighbor fe80::1 % 'dn42-jomat' as 64773;
+};
+
+protocol bgp chaossbg from dnpeers {
+  neighbor fe80::1 % 'dn42-chaossbg' as 4242421420;
+};
+      '';
+    };
+
+  services.quicktun = {
+    "dn42-fpletz" = {
+      protocol = "nacltai";
+      tunMode = 1;
+      remoteAddress = "2a01:4f8:161:23c1::2";
+      localAddress = "2001:608:a01::1";
+      localPort = 42000;
+      remotePort = 42000;
+      privateKey = "e7160476fd327cce3016b3f63cae875f808ad0b6c4d31b73641e1e1f881b8a0c"; # b35fb729e209fe5a077d74695da3ecfe577d9168d88b1a47b68580bcb4441937
+      publicKey = "53cc53f3a6719314615e1e7fc303134db3e912c419f0587aab1fb6c35e94ef5b";
+      upScript = ''
+        ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.214.1 dev dn42-fpletz
+        ${pkgs.iproute}/bin/ip addr replace fe80::2/64 dev dn42-fpletz
+        ${pkgs.iproute}/bin/ip link set dn42-fpletz up
+      '';
+    };
+    "dn42-jomat" = {
+      protocol = "nacltai";
+      tunMode = 1;
+      remoteAddress = "2a02:180:a:62:ffff:ffff:ffff:fffb";
+      localAddress = "2001:608:a01::1";
+      localPort = 42001;
+      remotePort = 42001;
+      privateKey = "73bda6ec1d8cb10f2e2ff14ce8a3bec5c555cbb9905ffd30abb457580b1b478e"; # 3f46ac44ac4f0014c0a942879ad42b7a1bf40abbb2fa5a3f27a2a9ca364c9331
+      publicKey = "9692bf40e029fa39368f03b0c3348605c20cd1acc74a4d3643ce219e7e39c00c";
+      upScript = ''
+        ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.216.242 dev dn42-jomat
+        ${pkgs.iproute}/bin/ip addr replace fe80::2/64 dev dn42-jomat
+        ${pkgs.iproute}/bin/ip link set dn42-jomat up
+      '';
+    };
+    "dn42-chaossbg" = {
+      protocol = "nacltai";
+      tunMode = 1;
+      remoteAddress = "2a02:180:1:1::517:f77";
+      localAddress = "2001:608:a01::1";
+      localPort = 42002;
+      remotePort = 42002;
+      privateKey = "86cfd964fc2768f4c178272514b4126a582fea1340f9ea1dc07ae2e598af6473"; # c4ba473e7454475f95c4b4d7b6b2c75c54376ad2eb96cb296b6b602b3b4d816b
+      publicKey = "8def7bdbfb32d4efb47c4adca8a0bce477207a4d07a222333f5a63ffffbd2053";
+      upScript = ''
+        ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.171.30 dev dn42-chaossbg
+        ${pkgs.iproute}/bin/ip addr replace fe80::2/64 dev dn42-chaossbg
+        ${pkgs.iproute}/bin/ip link set dn42-chaossbg up
+      '';
+    };
+  };
+
+  services.openvpn.servers.airvpn = secrets.openvpn.airvpn;
+  services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
+  services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
+
+  services.nginx =
+    { enable = true;
+      virtualHosts = let
+        firmware = {
+          root = "/srv/firmware.ffmuc.net";
+          extraConfig = ''
+            autoindex on;
+            access_log syslog:server=unix:/dev/log;
+          '';
+        };
+      in {
+        "_" = firmware;
+        "firmware.ffmuc.net" = firmware // {
+          enableSSL = true;
+          enableACME = true;
+        };
+      };
+    };
 
   users.extraUsers.root.password = secrets.rootPassword;
 }

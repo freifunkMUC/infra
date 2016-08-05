@@ -247,13 +247,15 @@ in
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
 
-              ${concatMapStrings (port: ''
-                iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
-              '') [ 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 ]}
+              ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
+              ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept
+              ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
+              ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 53 -j nixos-fw-accept
 
               ${concatMapStrings (port: ''
+                iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
                 iptables -A PREROUTING -t mangle -i br-${name} -p tcp --dport ${toString port} -j MARK --set-mark 5
-              '') [ 80 443 143 993 110 587 5222 5269 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 ]}
+              '') [ 80 443 8080 8443 9090 143 993 110 587 5222 5269 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 ]}
 
               ${concatStrings (mapAttrsToList (name: fcfg: ''
                 ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport ${toString fcfg.listenPort} -j nixos-fw-accept
@@ -263,6 +265,10 @@ in
             ip46tables -F FORWARD
             ip46tables -P FORWARD DROP
             ip46tables -A FORWARD -i br-+ -o br-+ -j ACCEPT
+            ip6tables -A FORWARD -i fastd-babel -o br-+ -j ACCEPT
+            ip6tables -A FORWARD -i br-+ -o fastd-babel -j ACCEPT
+            ip6tables -A FORWARD -s 2001:608:a01:b000::/52 -i fastd-babel -o ${cfg.ip6Interface} -j ACCEPT
+            ip6tables -A FORWARD -d 2001:608:a01:b000::/52  -i ${cfg.ip6Interface} -o fastd-babel -j ACCEPT
             ${concatSegments (name: scfg: ''
               ip6tables -A FORWARD -i br-${name} -o ${cfg.ip6Interface} -j ACCEPT
               ip6tables -A FORWARD -i ${cfg.ip6Interface} -o br-${name} -j ACCEPT
@@ -441,10 +447,34 @@ in
                 prefetch: yes
                 hide-version: yes
                 log-queries: no
+                domain-insecure: "dn42"
+                local-zone: "22.172.in-addr.arpa." nodefault
+                local-zone: "23.172.in-addr.arpa." nodefault
+
+              forward-zone:
+                name: "dn42"
+                forward-addr: 172.23.0.53
+
+              forward-zone:
+                name: "22.172.in-addr.arpa"
+                forward-addr: 172.23.0.53
+
+              forward-zone:
+                name: "23.172.in-addr.arpa"
+                forward-addr: 172.23.0.53
             '';
           };
         radvd = let
-          config = concatSegments (name: scfg:
+          config = ''
+            interface fastd-babel {
+              AdvSendAdvert on;
+              AdvManagedFlag on;
+              prefix 2001:608:a01:bfff::/64 {
+                  AdvValidLifetime 600;
+                  AdvPreferredLifetime 150;
+              };
+            };
+          '' + (concatSegments (name: scfg:
             lib.optionalString (scfg.ra.prefixes != []) ''
               interface br-${name} {
                 AdvSendAdvert on;
@@ -454,7 +484,6 @@ in
                   prefix ${prefix} {
                     AdvValidLifetime 600;
                     AdvPreferredLifetime 150;
-                    DeprecatePrefix on;
                   };
                 '') scfg.ra.prefixes)}
 
@@ -462,7 +491,7 @@ in
                   RDNSS ${dns} { };
                 '') scfg.ra.rdnss)}
               };
-          '');
+          ''));
           in
           { enable = (config != "");
             inherit config;
