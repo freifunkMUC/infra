@@ -311,6 +311,13 @@ in
             ip rule add iif br-${name} fwmark 5 lookup 5
           '')}
           ${cfg.networkingLocalCommands}
+
+          ip route add unreachable 10/8
+          ip route add unreachable 10/8 table 5
+          ip route add unreachable 172.16/12
+          ip route add unreachable 172.16/12 table 5
+          ip route add unreachable 192.168/16
+          ip route add unreachable 192.168/16 table 5
         '';
       };
 
