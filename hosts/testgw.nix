@@ -4,14 +4,14 @@
   imports = [
     ../modules/default.nix
     ../modules/gateway.nix
-    ../modules/smartos-kvm.nix
+    <nixpkgs/nixos/modules/profiles/qemu-guest.nix>
   ];
 
   freifunk.gateway = {
     enable = true;
     externalInterface = "eth0";
-    ip4Interfaces = [ "tun0" "eth1" ];
-    ip6Interface = "eth1";
+    ip4Interfaces = [ "tun0" "eth0" ];
+    ip6Interface = "eth0";
     segments = {
       ffmuc = {
         baseMacAddress = "80:00:01:23:42";
