@@ -11,6 +11,8 @@ let
     ecdsautils = callPackage ./ecdsautils { };
 
     fastd = callPackage ./fastd { };
+
+    hopglass-server = callPackage ./hopglass-server { };
   };
 
 in self

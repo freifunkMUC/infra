@@ -574,6 +574,16 @@ protocol bgp chaossbg from dnpeers {
           enableSSL = true;
           enableACME = true;
         };
+        "isartor.ffmuc.net" = {
+          forceSSL = true;
+          enableACME = true;
+          root = "/srv/isartor.ffmuc.net";
+          locations = {
+            "/hopglass/data/" = {
+              proxyPass = "http://[::1]:4000/";
+            };
+          };
+        };
       };
     };
 

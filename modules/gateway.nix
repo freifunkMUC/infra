@@ -239,7 +239,7 @@ in
     networking =
       { firewall = {
           allowedTCPPorts = [ 5201 69 ];
-          allowedUDPPorts = [ 69 ];
+          allowedUDPPorts = [ 69 45123 ];
           checkReversePath = false;
           extraCommands = ''
             ${concatSegments (name: scfg: ''
@@ -377,6 +377,60 @@ in
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         serviceConfig.ExecStart = "${pkgs.iperf}/bin/iperf -s -p 5201";
+      };
+      hopglass-server = {
+        description = "hopglass server";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        preStart = ''
+          mkdir -p /var/lib/hopglass-server
+          chown -R nobody:nogroup /var/lib/hopglass-server
+
+          cat << EOF > /var/lib/hopglass-server/config.json
+          {
+            "receiver": {
+              "receivers": [
+                { "module": "announced",
+                  "config": {
+                    "target": { "ip": "ff02::2:1001" },
+                    "port": 45123,
+                    "interval": {
+                      "statistics": 60,
+                      "nodeinfo": 300
+                    }
+                  }
+                }
+              ],
+              "ifaces": [
+                ${concatSegments (name: scfg: ''
+                  "br-${name}",
+                '')}
+                "fastd-babel"
+              ],
+              "storage": {
+                "file": "./raw.json"
+              },
+              "purge": {
+                "maxAge": 14
+              }
+            },
+            "provider": {
+              "offlineTime": 600
+            },
+            "webserver": {
+              "ip": "::1",
+              "port": 4000
+            }
+          }
+          EOF
+        '';
+        serviceConfig = {
+          User = "nobody";
+          Group = "nogroup";
+          WorkingDirectory = "/var/lib/hopglass-server";
+          PermissionsStartOnly = true;
+          ExecStart = "${ffpkgs.hopglass-server.package}/lib/node_modules/hopglass-server/hopglass-server.js";
+        };
       };
     };
 
