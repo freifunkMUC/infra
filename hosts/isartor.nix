@@ -558,6 +558,23 @@ protocol bgp chaossbg from dnpeers {
   services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
   services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
 
+  services.prometheus =
+    { enable = true;
+      extraFlags = [ "-web.external-url=https://isartor.ffmuc.net/prometheus" ];
+      scrapeConfigs = [
+        { job_name = "hopglass";
+          scrape_interval = "60s";
+          static_configs = [
+            { targets = [
+                "[::1]:4000"
+              ];
+              labels = { };
+            }
+          ];
+        }
+      ];
+    };
+
   services.nginx =
     { enable = true;
       virtualHosts = let
@@ -581,6 +598,9 @@ protocol bgp chaossbg from dnpeers {
           locations = {
             "/hopglass/data/" = {
               proxyPass = "http://[::1]:4000/";
+            };
+            "/prometheus" = {
+              proxyPass = "http://[::1]:9090";
             };
           };
         };

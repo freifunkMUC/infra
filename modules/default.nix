@@ -53,6 +53,13 @@
             MaxFileSec=1day
             MaxRetentionSec=1week
           '';
+
+        nginx =
+          { recommendedOptimisation = true;
+            recommendedTlsSettings = true;
+            recommendedGzipSettings = true;
+            recommendedProxySettings = true;
+          };
       };
 
     environment.systemPackages = with pkgs;
