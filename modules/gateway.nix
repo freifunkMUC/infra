@@ -314,10 +314,13 @@ in
 
           ip route add unreachable 10/8
           ip route add unreachable 10/8 table 5
+          ip route add unreachable 10/8 table 42
           ip route add unreachable 172.16/12
           ip route add unreachable 172.16/12 table 5
+          ip route add unreachable 172.16/12 table 42
           ip route add unreachable 192.168/16
           ip route add unreachable 192.168/16 table 5
+          ip route add unreachable 192.168/16 table 42
         '';
       };
 

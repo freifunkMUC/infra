@@ -187,16 +187,24 @@ in
       ip4 = [ { address = "195.30.94.49"; prefixLength = 28; } ];
       ip6 = [ { address = "2001:608:a01:1::2"; prefixLength = 64; } ];
     };
+    interfaces."tinc.icvpn" = {
+      ip4 = [ { address = "10.207.1.80"; prefixLength = 16; } ];
+      ip6 = [ { address = "fec0::a:cf:1:80"; prefixLength = 96; } ];
+    };
 
     defaultGateway = "195.30.94.30";
     defaultGateway6 = "2001:608:a01::ffff";
 
-    firewall.allowedTCPPorts = [ 80 443 ];
-    firewall.allowedUDPPorts = [ 123 10100 ];
+    firewall.allowedTCPPorts = [ 80 443 655 ];
+    firewall.allowedUDPPorts = [ 123 10100 655 42000 42001 42002 42003 42004 42005 ];
     firewall.extraCommands = ''
       ip6tables -I nixos-fw 3 -i fastd-babel -m pkttype --pkt-type multicast -j nixos-fw-accept
+      ip46tables -I FORWARD 1 -i br-+ -o tinc.icvpn -j ACCEPT
+      ip46tables -I FORWARD 1 -i tinc.icvpn -o br-+ -j ACCEPT
       ip46tables -I FORWARD 1 -i br-+ -o dn42-+ -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o br-+ -j ACCEPT
+      ip46tables -I FORWARD 1 -i tinc.icvpn -o dn42-+ -j ACCEPT
+      ip46tables -I FORWARD 1 -i dn42-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
     '';
   };
@@ -281,9 +289,6 @@ in
           range6 2001:608:a01:b000:f000:: 2001:608:a01:bfff:ffff::;
           prefix6 2001:608:a01:b000:: 2001:608:a01:bffe:: / 64;
         }
-
-        #subnet6 fe80::/64 {
-        #}
       '';
     };
 
@@ -298,6 +303,19 @@ in
       '';
     };
 
+  services.tinc.networks.icvpn = {
+    name = "muenchen1";
+    interfaceType = "tap";
+    extraConfig = ''
+      Mode = switch
+      ExperimentalProtocol = no
+      ConnectTo = berlin2
+      ConnectTo = darmstadt4
+      ConnectTo = luebeck2
+      ConnectTo = trier1
+      ConnectTo = hamburg03
+    '';
+  };
 
   services.bird =
     { enable = true;
@@ -324,6 +342,7 @@ include "${../static/bird_filter_dn42.conf}";
 
 roa table dn42_roa {
   include "${../static/bird_roa_dn42.conf}";
+  include "${../static/bird_roa_icvpn.conf}";
 };
 
 protocol kernel {
@@ -372,10 +391,8 @@ protocol pipe pipe42 {
   export all;
 };
 
-protocol static {
-  route 10.80.32.0/19 via "br-ffmuc";
-  route 10.80.64.0/19 via "br-welcome";
-  route 10.80.96.0/19 via "br-umland";
+protocol direct {
+  interface "br-*";
 }
 
 template bgp dnpeers {
@@ -385,8 +402,8 @@ template bgp dnpeers {
   import keep filtered;
   import filter {
     if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
-       print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
-       reject;
+      print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+      reject;
     }
     if is_valid_network() && !is_self_net() then {
       accept;
@@ -400,6 +417,20 @@ template bgp dnpeers {
     reject;
   };
   route limit 10000;
+}
+
+template bgp icpeers from dnpeers {
+  import filter {
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
+      print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+      reject;
+    }
+    gw = from;
+    if is_valid_network() && !is_self_net() then {
+      accept;
+    }
+    reject;
+  };
 }
 
 protocol bgp fpletz from dnpeers {
@@ -418,9 +449,23 @@ protocol bgp AS4242421340 from dnpeers {
   neighbor 172.20.176.1 as 4242421340;
 };
 
-protocol bgp AS4242420330 from dnpeers {
-  neighbor 172.20.182.1 as 4242420330;
-};
+#protocol bgp AS4242420330 from dnpeers {
+#  neighbor 172.20.182.1 as 4242420330;
+#};
+
+protocol bgp twink0r from dnpeers {
+  neighbor 172.20.11.1 as 4242421339;
+}
+
+protocol bgp fbnw from dnpeers {
+  neighbor 172.22.78.30 as 4242423955;
+}
+
+protocol bgp w0h from dnpeers {
+  neighbor 172.22.232.1 as 4242420013;
+}
+
+include "${../static/bird_peers_icvpn.conf}";
       '';
     };
 
@@ -447,6 +492,7 @@ include "${../static/bird6_filter_dn42.conf}";
 
 roa table dn42_roa {
   include "${../static/bird6_roa_dn42.conf}";
+  include "${../static/bird6_roa_icvpn.conf}";
 };
 
 protocol kernel {
@@ -459,13 +505,8 @@ protocol kernel {
   };
 }
 
-protocol static {
-  route fdef:ffc0:4fff:0::/64 via "br-ffmuc";
-  route 2001:608:a01:2::/64 via "br-ffmuc";
-  route fdef:ffc0:4fff:1::/64 via "br-welcome";
-  route 2001:608:a01:3::/64 via "br-welcome";
-  route fdef:ffc0:4fff:2::/64 via "br-umland";
-  route 2001:608:a01:4::/64 via "br-umland";
+protocol direct {
+  interface "br-*";
 }
 
 template bgp dnpeers {
@@ -503,6 +544,20 @@ protocol bgp jomat from dnpeers {
 protocol bgp chaossbg from dnpeers {
   neighbor fe80::1 % 'dn42-chaossbg' as 4242421420;
 };
+
+protocol bgp twink0r from dnpeers {
+  neighbor fe80::1 % 'dn42-twink0r' as 4242421339;
+}
+
+protocol bgp fbnw from dnpeers {
+  neighbor fe80::2 % 'dn42-fbnw' as 4242423955;
+}
+
+protocol bgp w0h from dnpeers {
+  neighbor fe80::7fc9 % 'dn42-w0h' as 4242420013;
+}
+
+include "${../static/bird6_peers_icvpn.conf}";
       '';
     };
 
@@ -556,7 +611,10 @@ protocol bgp chaossbg from dnpeers {
 
   services.openvpn.servers.airvpn = secrets.openvpn.airvpn;
   services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
-  services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
+  #services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
+  services.openvpn.servers.dn42-twink0r = secrets.openvpn.dn42-twink0r;
+  services.openvpn.servers.dn42-fbnw = secrets.openvpn.dn42-fbnw;
+  services.openvpn.servers.dn42-w0h = secrets.openvpn.dn42-w0h;
 
   services.prometheus =
     { enable = true;
