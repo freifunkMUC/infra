@@ -35,8 +35,10 @@ in
     networkingLocalCommands = ''
       ip rule add from 195.30.94.49/32 lookup 5
       ip route replace default via 195.30.94.30 table 5
-      ip route replace 195.30.94.48/28 dev eno1 table 5
+      ip route replace 195.30.94.48/28 via 195.30.94.26 table 5
       ip route replace 195.30.94.24/29 dev eno2 table 5
+      ip route replace 195.30.94.48/28 via 195.30.94.26 table 42
+      ip route replace 195.30.94.24/29 dev eno2 table 42
     '';
     graphite = secrets.stats.bpletza;
     segments = {
