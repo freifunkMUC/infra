@@ -632,7 +632,38 @@ include "${../static/bird6_peers_icvpn.conf}";
             }
           ];
         }
-      ];
+        { job_name = "node";
+          scrape_interval = "10s";
+          static_configs = [
+            { targets = [
+                "[::1]:9100"
+              ];
+              labels = { alias = "isartor.ffmuc.net"; };
+            }
+          ];
+        }
+       ];
+      nodeExporter = {
+        enable = true;
+        enabledCollectors = [
+          "conntrack"
+          "diskstats"
+          "entropy"
+          "filefd"
+          "filesystem"
+          "loadavg"
+          "interrupts"
+          "meminfo"
+          "netdev"
+          "netstat"
+          "sockstat"
+          "stat"
+          "time"
+          "uname"
+          "vmstat"
+        ];
+        port = 9100;
+      };
     };
 
   services.nginx =
