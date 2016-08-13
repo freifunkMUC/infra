@@ -468,7 +468,7 @@ in
                 interface=br-${name}
               '')}
               port = 0
-              dhcp-option=6,10.80.32.13
+              dhcp-option=6,10.80.0.2
 
               dhcp-ignore-names
               dhcp-lease-max=40960
