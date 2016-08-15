@@ -10,5 +10,15 @@
 
       require = [ ./hosts/isartor.nix ];
     };
+
+  sendlingertor = { config, pkgs, ... }:
+    {
+      deployment = {
+        targetEnv = "none";
+        targetHost = "sendlingertor.ffmuc.net";
+      };
+
+      require = [ ./hosts/sendlingertor.nix ];
+    };
 }
 
