@@ -9,7 +9,9 @@
       { kernel.sysctl."net.ipv6.conf.default.autoconf" = 0;
         kernel.sysctl."net.ipv6.conf.all.autoconf" = 0;
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_latest;
+        kernelPackages = pkgs.linuxPackages_4_6;
+        loader.grub.splashImage = null;
+        loader.grub.version = lib.mkDefault 2;
       };
 
     networking.firewall.allowPing = true;
@@ -64,7 +66,7 @@
 
     environment.systemPackages = with pkgs;
       [ vim htop git ethtool python3 perf-tools
-        tcpdump iptables jnettop iotop nmap
+        tcpdump iptables jnettop iotop nmap rsync
         rxvt_unicode.terminfo
       ];
 

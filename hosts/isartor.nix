@@ -15,6 +15,7 @@ in
   boot.initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "uhci_hcd" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/d0ca21c6-f0b7-46a2-8e48-572156dabd44";
@@ -59,29 +60,33 @@ in
         fastdConfigs = let
           secret = secrets.fastd.gw03.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
+          cpuaffinity = "1";
         in {
           backbone = {
             inherit secret listenAddresses;
             listenPort = 9999;
             mtu = 1426;
+            cpuaffinity = "2";
           };
           mesh0 = {
             inherit secret listenAddresses;
             listenPort = 10000;
             mtu = 1426;
+            cpuaffinity = "2";
           };
           mesh1 = {
             inherit secret listenAddresses;
             listenPort = 10099;
             mtu = 1426;
+            cpuaffinity = "2";
           };
           mesh2 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 10001;
             mtu = 1280;
           };
           mesh3 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 10098;
             mtu = 1280;
           };
@@ -106,25 +111,25 @@ in
         fastdConfigs = let
           secret = secrets.fastd.gwf02.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
-
+          cpuaffinity = "2";
         in {
           mesh0 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 11000;
             mtu = 1426;
           };
           mesh1 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 11099;
             mtu = 1426;
           };
           mesh2 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 11001;
             mtu = 1280;
           };
           mesh3 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 11098;
             mtu = 1280;
           };
@@ -149,24 +154,27 @@ in
         fastdConfigs = let
           secret = secrets.fastd.gwu02.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
+          cpuaffinity = "3";
         in {
           mesh0 = {
             inherit secret listenAddresses;
             listenPort = 10011;
             mtu = 1426;
+            cpuaffinity = "2";
           };
           mesh1 = {
             inherit secret listenAddresses;
             listenPort = 10089;
             mtu = 1426;
+            cpuaffinity = "2";
           };
           mesh3 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 10015;
             mtu = 1280;
           };
           mesh4 = {
-            inherit secret listenAddresses;
+            inherit secret listenAddresses cpuaffinity;
             listenPort = 10085;
             mtu = 1280;
           };
@@ -215,7 +223,7 @@ in
   };
 
    environment.systemPackages = with pkgs; [
-     tinc_pre babeld
+     tinc_pre babeld ipmitool
    ];
 
   systemd.services = {
@@ -692,6 +700,9 @@ include "${../static/bird6_peers_icvpn.conf}";
           locations = {
             "/hopglass/data/" = {
               proxyPass = "http://[::1]:4000/";
+            };
+            "/.metrics/node/" = {
+              proxyPass = "http://[::1]:9100/";
             };
             "/prometheus" = {
               proxyPass = "http://[::1]:9090";

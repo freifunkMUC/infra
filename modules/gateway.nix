@@ -12,7 +12,7 @@ let
 
   genMacAddr = base: prefix: "${prefix}:${base}";
 
-  mkFastd = { interface, mtu, bind, secret, mac, segment }:
+  mkFastd = { interface, mtu, bind, secret, mac, segment, cpuaffinity }:
     {
       description = "fastd tunneling daemon for ${interface}";
       wantedBy = [ "multi-user.target" ];
@@ -44,6 +44,8 @@ let
             float yes;
           ''}
       '';
+
+      serviceConfig.CPUAffinity = cpuaffinity;
     };
 
 in
@@ -140,6 +142,10 @@ in
                   mtu = mkOption {
                     type = types.int;
                     default = 1280;
+                  };
+                  cpuaffinity = mkOption {
+                    type = types.nullOr types.str;
+                    default = null;
                   };
                 };
               });
@@ -366,7 +372,7 @@ in
         };
       } // (fold (a: b: a // b) {} (mapAttrsToList (interface: fcfg: {
         "fastd-${name}-${interface}" = mkFastd {
-          inherit (fcfg) secret mac mtu;
+          inherit (fcfg) secret mac mtu cpuaffinity;
           bind = map (addr: "${addr}:${toString fcfg.listenPort}") fcfg.listenAddresses;
           interface = "${name}-${interface}";
           segment = name;
