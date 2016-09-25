@@ -9,11 +9,12 @@
       { kernel.sysctl."net.ipv6.conf.default.autoconf" = 0;
         kernel.sysctl."net.ipv6.conf.all.autoconf" = 0;
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_4_6;
+        kernelPackages = pkgs.linuxPackages_latest;
         loader.grub.splashImage = null;
         loader.grub.version = lib.mkDefault 2;
       };
 
+    networking.domain = lib.mkDefault "ffmuc.net";
     networking.firewall.allowPing = true;
     networking.wireless.enable = false;
 

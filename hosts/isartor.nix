@@ -8,6 +8,7 @@ in
 {
   imports = [
     ../modules/default.nix
+    ../modules/physical.nix
     ../modules/gateway.nix
   ];
 
