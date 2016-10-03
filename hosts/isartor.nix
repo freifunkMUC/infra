@@ -15,8 +15,7 @@ in
   hardware.enableAllFirmware = true;
   boot.initrd.availableKernelModules = [ "xhci_pci" "ehci_pci" "ahci" "uhci_hcd" "usbhid" "usb_storage" "sd_mod" "sr_mod" ];
   boot.kernelModules = [ "kvm-intel" ];
-  boot.extraModulePackages = [ ];
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.extraModulePackages = with config.boot.kernelPackages; [ jool ];
 
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/d0ca21c6-f0b7-46a2-8e48-572156dabd44";

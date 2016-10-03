@@ -9,7 +9,7 @@
       { kernel.sysctl."net.ipv6.conf.default.autoconf" = 0;
         kernel.sysctl."net.ipv6.conf.all.autoconf" = 0;
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_latest;
+        kernelPackages = pkgs.linuxPackages_4_7;
         loader.grub.splashImage = null;
         loader.grub.version = lib.mkDefault 2;
       };
