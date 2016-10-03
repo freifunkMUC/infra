@@ -406,7 +406,7 @@ include "${../static/bird_filter_dn42.conf}";
 
 roa table dn42_roa {
   include "${../static/bird_roa_dn42.conf}";
-  include "${../static/bird_roa_icvpn.conf}";
+  include "${ffpkgs.icvpn-bird}/roa4";
 };
 
 protocol kernel {
@@ -486,7 +486,7 @@ template bgp dnpeers {
 template bgp icpeers from dnpeers {
   import filter {
     if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
-      print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+      print "[icvpn] ROA check failed for ", net, " ASN ", bgp_path.last;
       reject;
     }
     gw = from;
@@ -529,7 +529,7 @@ protocol bgp w0h from dnpeers {
   neighbor 172.22.232.1 as 4242420013;
 }
 
-include "${../static/bird_peers_icvpn.conf}";
+include "${ffpkgs.icvpn-bird}/peers4";
       '';
     };
 
@@ -556,7 +556,7 @@ include "${../static/bird6_filter_dn42.conf}";
 
 roa table dn42_roa {
   include "${../static/bird6_roa_dn42.conf}";
-  include "${../static/bird6_roa_icvpn.conf}";
+  include "${ffpkgs.icvpn-bird}/roa6";
 };
 
 protocol kernel {
@@ -597,6 +597,8 @@ template bgp dnpeers {
   route limit 10000;
 }
 
+template bgp icpeers from dnpeers { }
+
 protocol bgp fpletz from dnpeers {
   neighbor fe80::1 % 'dn42-fpletz' as 4242420235;
 };
@@ -621,7 +623,7 @@ protocol bgp w0h from dnpeers {
   neighbor fe80::7fc9 % 'dn42-w0h' as 4242420013;
 }
 
-include "${../static/bird6_peers_icvpn.conf}";
+include "${ffpkgs.icvpn-bird}/peers6";
       '';
     };
 

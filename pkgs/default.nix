@@ -6,13 +6,15 @@ let
   callPackage = pkgs.lib.callPackageWith (pkgs // self);
 
   self = rec {
-    libuecc = callPackage ./libuecc { };
-
     ecdsautils = callPackage ./ecdsautils { };
 
     fastd = callPackage ./fastd { };
 
     hopglass-server = callPackage ./hopglass-server { };
+
+    icvpn-bird = callPackage ./icvpn-bird { };
+
+    libuecc = callPackage ./libuecc { };
   };
 
 in self
