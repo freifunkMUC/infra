@@ -29,6 +29,53 @@ in
   boot.loader.grub.version = 2;
   boot.loader.grub.device = "/dev/sda";
 
+  containers.unbound-dns64 = {
+    autoStart = true;
+    privateNetwork = false;
+    config = { ... }: {
+      services.unbound =
+          { enable = true;
+            allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
+            interfaces = [ "2001:608:a01:bfff::1" ];
+            extraConfig = ''
+              server:
+                port: 53
+                num-threads: 8
+                msg-cache-size: 16M
+                msg-cache-slabs: 8
+                num-queries-per-thread: 2048
+                rrset-cache-size: 16M
+                rrset-cache-slabs: 8
+                cache-min-ttl: 10
+                cache-max-ttl: 86400
+                cache-max-negative-ttl: 600
+                qname-minimisation: yes
+                prefetch: yes
+                hide-version: yes
+                log-queries: no
+                domain-insecure: "dn42"
+                local-zone: "22.172.in-addr.arpa." nodefault
+                local-zone: "23.172.in-addr.arpa." nodefault
+                module-config: "dns64 validator iterator"
+                dns64-prefix: 2001:608:a01:0:64:ff9b::/96  # transfer-netz von space
+
+              forward-zone:
+                name: "dn42"
+                forward-addr: 172.23.0.53
+
+              forward-zone:
+                name: "22.172.in-addr.arpa"
+                forward-addr: 172.23.0.53
+
+              forward-zone:
+                name: "23.172.in-addr.arpa"
+                forward-addr: 172.23.0.53
+            '';
+          };
+      };
+  };
+
+
   freifunk.gateway = {
     enable = true;
     externalInterface = "eno2";
@@ -41,6 +88,9 @@ in
       ip route replace 195.30.94.24/29 dev eno2 table 5
       ip route replace 195.30.94.48/28 via 195.30.94.26 table 42
       ip route replace 195.30.94.24/29 dev eno2 table 42
+
+      ethtool --offload eno2 gro off
+      modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
     '';
     graphite = secrets.stats.bpletza;
     segments = {
@@ -224,7 +274,7 @@ in
   };
 
    environment.systemPackages = with pkgs; [
-     tinc_pre babeld ipmitool
+     tinc_pre babeld ipmitool jool-cli dnsutils pciutils
    ];
 
   systemd.services = {
@@ -270,8 +320,8 @@ in
         redistribute deny
 
         # Don't accept default routes
-        in ip 0.0.0.0/32 le 0 deny
-        in ip ::/128 le 0 deny
+        in ip 0.0.0.0/0 le 0 deny
+        in ip ::/0 le 0 deny
       '';
       in {
         description = "Babel routing daemon";

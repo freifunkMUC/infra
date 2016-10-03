@@ -474,7 +474,7 @@ in
                 interface=br-${name}
               '')}
               port = 0
-              dhcp-option=6,10.80.0.2
+              dhcp-option=6,10.80.32.13
 
               dhcp-ignore-names
               dhcp-lease-max=40960
@@ -499,11 +499,11 @@ in
         unbound =
           { enable = true;
             allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
-            interfaces = [ "0.0.0.0" "::0" ];
+            interfaces = [ "0.0.0.0" "2001:608:a01::53" ];
             extraConfig = ''
               server:
                 port: 53
-                interface-automatic: yes
+                #interface-automatic: yes
                 num-threads: 8
                 msg-cache-size: 16M
                 msg-cache-slabs: 8
