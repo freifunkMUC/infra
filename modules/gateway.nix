@@ -499,7 +499,7 @@ in
         unbound =
           { enable = true;
             allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
-            interfaces = [ "0.0.0.0" "2001:608:a01::53" ];
+            interfaces = [ "10.80.32.13" "2001:608:a01::53" ];
             extraConfig = ''
               server:
                 port: 53
