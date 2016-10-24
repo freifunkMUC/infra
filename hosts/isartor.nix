@@ -260,7 +260,7 @@ in
     nameservers = [ "2001:608:a01::53" ];
 
     firewall.allowedTCPPorts = [ 80 443 655 ];
-    firewall.allowedUDPPorts = [ 123 10100 655 42000 42001 42002 42003 42004 42005 ];
+    firewall.allowedUDPPorts = [ 123 10100 655 42000 42001 42002 42003 42004 42005 547 ];
     firewall.extraCommands = ''
       ip6tables -I nixos-fw 3 -i fastd-babel -m pkttype --pkt-type multicast -j nixos-fw-accept
       ip46tables -I FORWARD 1 -i br-+ -o tinc.icvpn -j ACCEPT
@@ -330,6 +330,58 @@ in
         serviceConfig = {
           ExecStart =
             "${pkgs.babeld}/bin/babeld -c ${babeldConf} fastd-babel";
+        };
+      };
+
+    kea-dhcp6 = let
+      keaConf = pkgs.writeText "kea6.json" ''
+        {
+          "Dhcp6":
+            {
+              "control-socket": {
+                "socket-type": "unix",
+                "socket-name": "/run/kea-dhcp6.socket"
+              },
+
+              "interfaces-config": {
+                "interfaces": [ "br-ffmuc", "br-umland", "br-welcome" ]
+              },
+
+              "option-data": [
+                { "name": "dns-servers",
+                  "data": "2001:608:a01::53"
+                },
+                { "name": "domain-search",
+                  "data": "ffmuc.net"
+                },
+                { "name": "sntp-servers",
+                  "data": "fdef:ffc0:4fff::131"
+                }
+              ],
+
+              "lease-database": { "type": "memfile" }
+            },
+
+          "Logging": {
+            "loggers": [ {
+              "name": "kea-dhcp6",
+              "output_options": [
+                { "output": "stdout" }
+              ],
+              "severity": "INFO"
+            } ]
+          }
+        }
+      '';
+      in {
+        description = "Kea DHCPv6 daemon";
+        wantedBy = [ "multi-user.target" ];
+        preStart = ''
+          mkdir -p /var/run/kea /var/kea
+        '';
+        serviceConfig = {
+          RestartSec = "5s";
+          ExecStart = "${pkgs.kea}/bin/kea-dhcp6 -c ${keaConf}";
         };
       };
   };
