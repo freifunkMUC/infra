@@ -9,7 +9,7 @@
       { kernel.sysctl."net.ipv6.conf.default.autoconf" = 0;
         kernel.sysctl."net.ipv6.conf.all.autoconf" = 0;
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_4_7;
+        kernelPackages = pkgs.linuxPackages_4_8;
         loader.grub.splashImage = null;
         loader.grub.version = lib.mkDefault 2;
       };
@@ -66,7 +66,7 @@
       };
 
     environment.systemPackages = with pkgs;
-      [ vim htop git ethtool python3 perf-tools
+      [ vim htop git ethtool python3 perf-tools unzip
         tcpdump iptables jnettop iotop nmap rsync
         rxvt_unicode.terminfo
       ];

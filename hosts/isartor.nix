@@ -777,6 +777,8 @@ include "${ffpkgs.icvpn-bird}/peers6";
           "time"
           "uname"
           "vmstat"
+          "systemd"
+          "logind"
         ];
         port = 9100;
       };
