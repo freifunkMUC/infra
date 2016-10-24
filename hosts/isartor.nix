@@ -257,6 +257,7 @@ in
 
     defaultGateway = "195.30.94.30";
     defaultGateway6 = "2001:608:a01::ffff";
+    nameservers = [ "2001:608:a01::53" ];
 
     firewall.allowedTCPPorts = [ 80 443 655 ];
     firewall.allowedUDPPorts = [ 123 10100 655 42000 42001 42002 42003 42004 42005 ];
