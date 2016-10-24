@@ -248,15 +248,15 @@ in
           allowedUDPPorts = [ 69 45123 ];
           checkReversePath = false;
           extraCommands = ''
+            ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
+            ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept
+            ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
+            ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 53 -j nixos-fw-accept
+
             ${concatSegments (name: scfg: ''
               iptables -I nixos-fw 3 -i br-${name} -p udp --dport 67:68 --sport 67:68 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
-
-              ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
-              ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept
-              ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
-              ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 53 -j nixos-fw-accept
 
               ${concatMapStrings (port: ''
                 iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
@@ -467,6 +467,7 @@ in
     services =
       { dnsmasq =
           { enable = true;
+            resolveLocalQueries = false;
             extraConfig = ''
               bind-interfaces
               interface=lo
@@ -487,7 +488,7 @@ in
               cache-size=0
               no-negcache
               no-resolv
-              server=::1#53
+              server=2001:608:a01::53
 
               enable-tftp
               tftp-root=/var/lib/tftp
@@ -539,6 +540,7 @@ in
             interface fastd-babel {
               AdvSendAdvert on;
               AdvManagedFlag on;
+              MaxRtrAdvInterval 30;
               prefix 2001:608:a01:bfff::/64 {
                   AdvValidLifetime 600;
                   AdvPreferredLifetime 150;
@@ -548,17 +550,21 @@ in
             lib.optionalString (scfg.ra.prefixes != []) ''
               interface br-${name} {
                 AdvSendAdvert on;
-                MaxRtrAdvInterval 300;
+                AdvManagedFlag off;
+                AdvOtherConfigFlag on;
+                MaxRtrAdvInterval 60;
 
                 ${concatStrings (map (prefix: ''
                   prefix ${prefix} {
                     AdvValidLifetime 600;
-                    AdvPreferredLifetime 150;
+                    AdvPreferredLifetime 300;
                   };
                 '') scfg.ra.prefixes)}
 
                 ${concatStrings (map (dns: ''
-                  RDNSS ${dns} { };
+                      RDNSS ${dns} {
+                        AdvRDNSSLifetime 600;
+                      };
                 '') scfg.ra.rdnss)}
               };
           ''));
