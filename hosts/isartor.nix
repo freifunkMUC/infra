@@ -88,7 +88,7 @@ in
       ip route replace 195.30.94.48/28 via 195.30.94.26 table 42
       ip route replace 195.30.94.24/29 dev eno2 table 42
 
-      ethtool --offload eno2 gro off
+      ${pkgs.ethtool}/bin/ethtool --offload eno2 gro off
       modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
     '';
     graphite = secrets.stats.bpletza;
