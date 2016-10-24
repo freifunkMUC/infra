@@ -130,6 +130,8 @@ let
           mv "$packageDir" "$DIR/${packageName}"
       elif [ -d "${src}" ]
       then
+          strippedName="$(stripHash ${src})"
+
           # Restore write permissions to make building work
            chmod -R u+w $strippedName
            
