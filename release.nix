@@ -2,7 +2,6 @@
 
 let
 
-  lib = import <nixpkgs/lib>;
   nixos = import <nixpkgs/nixos>;
 
   buildEnv = conf: (nixos {

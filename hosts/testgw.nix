@@ -7,17 +7,10 @@
     <nixpkgs/nixos/modules/profiles/qemu-guest.nix>
   ];
 
-  boot.loader.grub =
-    { enable = true;
-      version = 2;
-      device = "/dev/vda";
-      timeout = 2;
-    };
-
-  fileSystems."/" =
-    { device = "/dev/vg0/nixos";
-      fsType = "ext4";
-    };
+  networking = {
+    hostName = "testgw";
+    dhcpcd.allowInterfaces = [ "eth0" ];
+  };
 
   freifunk.gateway = {
     enable = true;
@@ -74,11 +67,4 @@
       port = 2003;
     };
   };
-
-  networking = {
-    hostName = "testgw";
-    dhcpcd.allowInterfaces = [ "eth0" ];
-  };
-
-  users.extraUsers.root.password = "";
 }

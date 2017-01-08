@@ -6,25 +6,36 @@
     time.timeZone = "UTC";
 
     boot =
-      { kernel.sysctl."net.ipv6.conf.default.autoconf" = 0;
-        kernel.sysctl."net.ipv6.conf.all.autoconf" = 0;
-        tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_4_8;
-        loader.grub.splashImage = null;
-        loader.grub.version = lib.mkDefault 2;
-      };
+    { kernel.sysctl =
+        { "net.ipv6.conf.default.autoconf" = 0;
+          "net.ipv6.conf.all.autoconf" = 0;
+          "vm.overcommit_memory" = 1;
+          "kernel.panic" = 1;
+        };
+      tmpOnTmpfs = true;
+      kernelPackages = pkgs.linuxPackages_4_9;
+      loader =
+        { timeout = lib.mkDefault 1;
+          grub.splashImage = null;
+          grub.version = lib.mkDefault 2;
+        };
+    };
 
-    networking.domain = lib.mkDefault "ffmuc.net";
-    networking.firewall.allowPing = true;
-    networking.wireless.enable = false;
+    networking =
+      { domain = lib.mkDefault "ffmuc.net";
+        firewall.allowPing = true;
+        wireless.enable = lib.mkDefault false;
+      };
 
     services =
       { atd.enable = false;
         nscd.enable = false;
         udisks2.enable = false;
-        haveged.enable = true;
+
+        haveged.enable = lib.mkDefault true;
 
         ntp.enable = false;
+        timesyncd.enable = false;
         chrony =
           { enable = true;
             servers =
@@ -66,9 +77,10 @@
       };
 
     environment.systemPackages = with pkgs;
-      [ vim htop git ethtool python3 perf-tools unzip
-        tcpdump iptables jnettop iotop nmap rsync
-        rxvt_unicode.terminfo
+      [ vim htop git ethtool python3 perf-tools unzip traceroute
+        tcpdump iptables jnettop iotop nmap rsync dstat wget
+        rxvt_unicode.terminfo f2fs-tools strace mtr lsof tmux
+        screen pciutils
       ];
 
     programs.bash.enableCompletion = true;
@@ -79,7 +91,7 @@
 
     security =
       { polkit.enable = false;
-        rngd.enable = false;
+        rngd.enable = lib.mkDefault false;
       };
 
     users.mutableUsers = false;

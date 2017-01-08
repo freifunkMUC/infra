@@ -10,10 +10,16 @@ deployment is available in `deploy.nix`.
 
 You can easily bring up a test gateway locally using `qemu` with:
 
-    nix-build .
-    result/bin/run-testgw-vm
+    make
+    ./result/bin/run-testgw-vm
 
-Please ensure you're on the latest unstable or 16.03 nixpkgs channel.
+This will use [mayflower/nixpkgs](https://github.com/mayflower/nixpkgs)
+which the production deployment also uses. The main reason for this is
+that there are some security enhancements not yet present on upstream
+NixOS. It it regularly updated.
+
+All configs should also work with the latest upstream master/17.03 but
+is not actively tested against it.
 
 ## Secrets
 

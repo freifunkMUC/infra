@@ -178,8 +178,7 @@ in
         kernelModules = [ "batman_adv" ];
         tmpOnTmpfs = true;
         kernel.sysctl =
-          { "kernel.panic" = 1;
-            "fs.file-max" = 100000;
+          { "fs.file-max" = 100000;
             "vm.swappiness" = 10;
             "net.core.default_qdisc" = "fq_codel";
             "net.ipv4.ip_forward" = 1;
