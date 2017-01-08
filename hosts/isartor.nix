@@ -518,12 +518,17 @@ template bgp dnpeers {
   import keep filtered;
   import filter {
     if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
-      print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+      print "[", proto, "] ROA check invalid for ", net, " ASN ", bgp_path.last;
+      reject;
+    }
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_UNKNOWN) then {
+      print "[", proto, "] ROA check unknown for ", net, " ASN ", bgp_path.last;
       reject;
     }
     if is_valid_network() && !is_self_net() then {
       accept;
     }
+    print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
     reject;
   };
   export filter {
@@ -538,26 +543,31 @@ template bgp dnpeers {
 template bgp icpeers from dnpeers {
   import filter {
     if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
-      print "[icvpn] ROA check failed for ", net, " ASN ", bgp_path.last;
+      print "[", proto, "] ROA check invalid for ", net, " ASN ", bgp_path.last;
+      reject;
+    }
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_UNKNOWN) then {
+      print "[", proto, "] ROA check unknown for ", net, " ASN ", bgp_path.last;
       reject;
     }
     gw = from;
     if is_valid_network() && !is_self_net() then {
       accept;
     }
+    print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
     reject;
   };
 }
 
-protocol bgp fpletz from dnpeers {
+protocol bgp dn42_fpletz from dnpeers {
   neighbor 172.23.214.1 as 4242420235;
 };
 
-protocol bgp jomat from dnpeers {
+protocol bgp dn42_jomat from dnpeers {
   neighbor 172.23.216.242 as 64773;
 };
 
-protocol bgp chaossbg from dnpeers {
+protocol bgp dn42_chaossbg from dnpeers {
   neighbor 172.23.171.30 as 4242421420;
 };
 
@@ -569,15 +579,15 @@ protocol bgp AS4242421340 from dnpeers {
 #  neighbor 172.20.182.1 as 4242420330;
 #};
 
-protocol bgp twink0r from dnpeers {
+protocol bgp dn42_twink0r from dnpeers {
   neighbor 172.20.11.1 as 4242421339;
 }
 
-protocol bgp fbnw from dnpeers {
+protocol bgp dn42_fbnw from dnpeers {
   neighbor 172.22.78.30 as 4242423955;
 }
 
-protocol bgp w0h from dnpeers {
+protocol bgp dn42_w0h from dnpeers {
   neighbor 172.22.232.1 as 4242420013;
 }
 
@@ -632,12 +642,17 @@ template bgp dnpeers {
   import keep filtered;
   import filter {
     if (roa_check(dn42_roa, net, bgp_path.last) = ROA_INVALID) then {
-       print "[dn42] ROA check failed for ", net, " ASN ", bgp_path.last;
+       print "[", proto, "] ROA check invalid for ", net, " ASN ", bgp_path.last;
        reject;
+    }
+    if (roa_check(dn42_roa, net, bgp_path.last) = ROA_UNKNOWN) then {
+      print "[", proto, "] ROA check unknown for ", net, " ASN ", bgp_path.last;
+      reject;
     }
     if is_valid_network() && !is_self_net() then {
       accept;
     }
+    print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
     reject;
   };
   export filter {
@@ -651,27 +666,27 @@ template bgp dnpeers {
 
 template bgp icpeers from dnpeers { }
 
-protocol bgp fpletz from dnpeers {
+protocol bgp dn42_fpletz from dnpeers {
   neighbor fe80::1 % 'dn42-fpletz' as 4242420235;
 };
 
-protocol bgp jomat from dnpeers {
+protocol bgp dn42_jomat from dnpeers {
   neighbor fe80::1 % 'dn42-jomat' as 64773;
 };
 
-protocol bgp chaossbg from dnpeers {
+protocol bgp dn42_chaossbg from dnpeers {
   neighbor fe80::1 % 'dn42-chaossbg' as 4242421420;
 };
 
-protocol bgp twink0r from dnpeers {
+protocol bgp dn42_twink0r from dnpeers {
   neighbor fe80::1 % 'dn42-twink0r' as 4242421339;
 }
 
-protocol bgp fbnw from dnpeers {
+protocol bgp dn42_fbnw from dnpeers {
   neighbor fe80::2 % 'dn42-fbnw' as 4242423955;
 }
 
-protocol bgp w0h from dnpeers {
+protocol bgp dn42_w0h from dnpeers {
   neighbor fe80::7fc9 % 'dn42-w0h' as 4242420013;
 }
 

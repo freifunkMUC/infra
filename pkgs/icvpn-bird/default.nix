@@ -13,13 +13,13 @@ in
 
 stdenv.mkDerivation rec {
   name = "icvpn-bird-${version}";
-  version = "2016-09-16";
+  version = "2016-12-08";
 
   src = fetchFromGitHub {
     owner = "freifunk";
     repo = "icvpn-meta";
-    rev = "2de8afe33c87ec4294f777bf5a3a24590c072902";
-    sha256 = "0a7kqq7r4d8mpikyh42qcc7xnncvlczzhg7y0cdyq6bqf4frsbr4";
+    rev = "967df629b2e18fba73dae224a4a3334895e134b5";
+    sha256 = "06yqh8cikx1s3xc03fyiaflkw3gawfxwi18fz030rskp6gv17sk6";
   };
 
   phases = [ "unpackPhase" "buildPhase" ];
