@@ -81,7 +81,7 @@ in
     ip4Interfaces = [ "tun0" "eno2" ];
     ip6Interface = "eno2";
     networkingLocalCommands = ''
-      ip rule add from 195.30.94.49/32 lookup 5
+      ip rule add priority 30 from 195.30.94.49/32 lookup 5
       ip route replace default via 195.30.94.30 table 5
       ip route replace 195.30.94.48/28 via 195.30.94.26 table 5
       ip route replace 195.30.94.24/29 dev eno2 table 5
@@ -89,7 +89,7 @@ in
       ip route replace 195.30.94.24/29 dev eno2 table 42
 
       ${pkgs.ethtool}/bin/ethtool --offload eno2 gro off
-      modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
+      ${pkgs.kmod}/bin/modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
     '';
     graphite = secrets.stats.bpletza;
     segments = {
@@ -270,6 +270,9 @@ in
       ip46tables -I FORWARD 1 -i tinc.icvpn -o dn42-+ -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
+
+      # bogus node with ffhh firmware
+      ip6tables -I nixos-fw 1 -s fe80::62e3:27ff:feee:213e/128 -i br-ffmuc -j DROP
     '';
   };
 
@@ -743,38 +746,14 @@ include "${ffpkgs.icvpn-bird}/peers6";
   };
 
   services.openvpn.servers.airvpn = secrets.openvpn.airvpn;
-  services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
+  #services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
   #services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
   services.openvpn.servers.dn42-twink0r = secrets.openvpn.dn42-twink0r;
   services.openvpn.servers.dn42-fbnw = secrets.openvpn.dn42-fbnw;
   services.openvpn.servers.dn42-w0h = secrets.openvpn.dn42-w0h;
 
   services.prometheus =
-    { enable = true;
-      extraFlags = [ "-web.external-url=https://isartor.ffmuc.net/prometheus" ];
-      scrapeConfigs = [
-        { job_name = "hopglass";
-          scrape_interval = "60s";
-          static_configs = [
-            { targets = [
-                "[::1]:4000"
-              ];
-              labels = { };
-            }
-          ];
-        }
-        { job_name = "node";
-          scrape_interval = "10s";
-          static_configs = [
-            { targets = [
-                "[::1]:9100"
-              ];
-              labels = { alias = "isartor.ffmuc.net"; };
-            }
-          ];
-        }
-       ];
-      nodeExporter = {
+    { nodeExporter = {
         enable = true;
         enabledCollectors = [
           "conntrack"
@@ -825,9 +804,6 @@ include "${ffpkgs.icvpn-bird}/peers6";
             };
             "/.metrics/node/" = {
               proxyPass = "http://[::1]:9100/";
-            };
-            "/prometheus" = {
-              proxyPass = "http://[::1]:9090";
             };
           };
         };
