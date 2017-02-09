@@ -91,7 +91,6 @@ in
       ${pkgs.ethtool}/bin/ethtool --offload eno2 gro off
       ${pkgs.kmod}/bin/modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
     '';
-    graphite = secrets.stats.bpletza;
     segments = {
       ffmuc = {
         baseMacAddress = "80:00:03:23:42";

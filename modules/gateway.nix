@@ -156,17 +156,6 @@ in
         description = "Freifunk Segments configuration";
       };
 
-      graphite.host = mkOption {
-        type = types.str;
-        description = "Graphite hostname to deliver stats to";
-        example = "stats.example.com";
-      };
-
-      graphite.port = mkOption {
-        type = types.int;
-        description = "Graphite TCP port to deliver stats to";
-        example = 2003;
-      };
     };
   };
 
@@ -595,64 +584,6 @@ in
           in
           { enable = (config != "");
             inherit config;
-          };
-        collectd =
-          { enable = true;
-            extraConfig = ''
-              FQDNLookup true
-              Interval 30
-
-              LoadPlugin conntrack
-              LoadPlugin cpu
-              LoadPlugin df
-              LoadPlugin disk
-              LoadPlugin dns
-              LoadPlugin entropy
-              LoadPlugin interface
-              LoadPlugin load
-              LoadPlugin memory
-              LoadPlugin processes
-              LoadPlugin swap
-              LoadPlugin users
-              LoadPlugin write_graphite
-
-              <Plugin df>
-                FSType rootfs
-                FSType sysfs
-                FSType proc
-                FSType devtmpfs
-                FSType devpts
-                FSType tmpfs
-                FSType fusectl
-                FSType cgroup
-                IgnoreSelected true
-              </Plugin>
-
-              <Plugin dns>
-              ${concatSegments (name: scfg: ''
-                Interface "br-${name}"
-              '')}
-              </Plugin>
-
-              <Plugin interface>
-                Interface "lo"
-                IgnoreSelected true
-              </Plugin>
-
-              <Plugin write_graphite>
-                <Node "${cfg.graphite.host}">
-                  Host "${cfg.graphite.host}"
-                  Port "${toString cfg.graphite.port}"
-                  Protocol "tcp"
-                  LogSendErrors true
-                  Prefix "servers."
-                  StoreRates true
-                  AlwaysAppendDS false
-                  SeparateInstances false
-                  EscapeCharacter "_"
-                </Node>
-              </Plugin>
-            '';
           };
       };
     };

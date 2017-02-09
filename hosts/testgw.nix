@@ -64,9 +64,5 @@
         ];
       };
     };
-    graphite = {
-      host = "localhost";
-      port = 2003;
-    };
   };
 }
