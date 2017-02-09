@@ -33,44 +33,44 @@ in
     privateNetwork = false;
     config = { ... }: {
       services.unbound =
-          { enable = true;
-            allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
-            interfaces = [ "2001:608:a01:bfff::1" ];
-            extraConfig = ''
-              server:
-                port: 53
-                num-threads: 8
-                msg-cache-size: 16M
-                msg-cache-slabs: 8
-                num-queries-per-thread: 2048
-                rrset-cache-size: 16M
-                rrset-cache-slabs: 8
-                cache-min-ttl: 10
-                cache-max-ttl: 86400
-                cache-max-negative-ttl: 600
-                qname-minimisation: yes
-                prefetch: yes
-                hide-version: yes
-                log-queries: no
-                domain-insecure: "dn42"
-                local-zone: "22.172.in-addr.arpa." nodefault
-                local-zone: "23.172.in-addr.arpa." nodefault
-                module-config: "dns64 validator iterator"
-                dns64-prefix: 2001:608:a01:0:64:ff9b::/96  # transfer-netz von space
+        { enable = true;
+          allowedAccess = [ "::1" "127.0.0.1" "::/0" "0.0.0.0/0" ];
+          interfaces = [ "2001:608:a01:bfff::1" ];
+          extraConfig = ''
+            server:
+              port: 53
+              num-threads: 8
+              msg-cache-size: 16M
+              msg-cache-slabs: 8
+              num-queries-per-thread: 2048
+              rrset-cache-size: 16M
+              rrset-cache-slabs: 8
+              cache-min-ttl: 10
+              cache-max-ttl: 86400
+              cache-max-negative-ttl: 600
+              qname-minimisation: yes
+              prefetch: yes
+              hide-version: yes
+              log-queries: no
+              domain-insecure: "dn42"
+              local-zone: "22.172.in-addr.arpa." nodefault
+              local-zone: "23.172.in-addr.arpa." nodefault
+              module-config: "dns64 validator iterator"
+              dns64-prefix: 2001:608:a01:0:64:ff9b::/96  # transfer-netz von space
 
-              forward-zone:
-                name: "dn42"
-                forward-addr: 172.23.0.53
+            forward-zone:
+              name: "dn42"
+              forward-addr: 172.23.0.53
 
-              forward-zone:
-                name: "22.172.in-addr.arpa"
-                forward-addr: 172.23.0.53
+            forward-zone:
+              name: "22.172.in-addr.arpa"
+              forward-addr: 172.23.0.53
 
-              forward-zone:
-                name: "23.172.in-addr.arpa"
-                forward-addr: 172.23.0.53
-            '';
-          };
+            forward-zone:
+              name: "23.172.in-addr.arpa"
+              forward-addr: 172.23.0.53
+          '';
+        };
       };
   };
 
@@ -110,13 +110,13 @@ in
         fastdConfigs = let
           secret = secrets.fastd.gw03.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
-          cpuaffinity = "1";
+          cpuaffinity = "1-2";
         in {
           backbone = {
             inherit secret listenAddresses;
             listenPort = 9999;
             mtu = 1426;
-            cpuaffinity = "2";
+            cpuaffinity = "0";
           };
           mesh0 = {
             inherit secret listenAddresses;
@@ -204,7 +204,7 @@ in
         fastdConfigs = let
           secret = secrets.fastd.gwu02.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
-          cpuaffinity = "3";
+          cpuaffinity = "2-3";
         in {
           mesh0 = {
             inherit secret listenAddresses;
@@ -281,6 +281,8 @@ in
    ];
 
   systemd.services = {
+    openvpn-airvpn.serviceConfig.CPUAffinity = "0";
+
     fastd-babel = {
       description = "fastd tunneling daemon for babel";
       wantedBy = [ "network.target" "multi-user.target" ];
@@ -389,10 +391,10 @@ in
       };
   };
 
-  services.dhcpd =
+  services.dhcpd4 =
     { enable = true;
       interfaces = [ "fastd-babel" ];
-      extraFlags = "-6";
+      extraFlags = [ "-6" ];
       configFile = pkgs.writeText "dhpcd.conf" ''
         authoritative;
         log-facility local1;

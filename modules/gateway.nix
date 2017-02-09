@@ -244,7 +244,7 @@ in
     networking =
       { firewall = {
           allowedTCPPorts = [ 5201 69 ];
-          allowedUDPPorts = [ 69 45123 ];
+          allowedUDPPorts = [ 69 ];
           checkReversePath = false;
           extraCommands = ''
             ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
@@ -252,15 +252,18 @@ in
             ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
             ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 53 -j nixos-fw-accept
 
+            iptables -t mangle -F PREROUTING
+
             ${concatSegments (name: scfg: ''
               iptables -I nixos-fw 3 -i br-${name} -p udp --dport 67:68 --sport 67:68 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
+              ip6tables -I nixos-fw 3 -i br-${name} -p udp --dport 45123 -j nixos-fw-accept
 
               ${concatMapStrings (port: ''
                 iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
                 iptables -A PREROUTING -t mangle -i br-${name} -p tcp --dport ${toString port} -j MARK --set-mark 5
-              '') [ 80 443 8080 8443 9090 143 993 110 587 5222 5269 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 ]}
+              '') [ 80 443 8080 8443 9090 143 993 110 587 5222 5269 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 22 2223 ]}
 
               ${concatStrings (mapAttrsToList (name: fcfg: ''
                 ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport ${toString fcfg.listenPort} -j nixos-fw-accept
@@ -438,6 +441,7 @@ in
           WorkingDirectory = "/var/lib/hopglass-server";
           PermissionsStartOnly = true;
           ExecStart = "${ffpkgs.hopglass-server.package}/lib/node_modules/hopglass-server/hopglass-server.js";
+          CPUAffinity = "0";
         };
       };
     };
@@ -504,22 +508,43 @@ in
               server:
                 port: 53
                 #interface-automatic: yes
+                so-reuseport: yes
                 num-threads: 8
-                msg-cache-size: 16M
+                outgoing-range: 8192
+                num-queries-per-thread: 4096
+
                 msg-cache-slabs: 8
-                num-queries-per-thread: 2048
-                rrset-cache-size: 16M
                 rrset-cache-slabs: 8
+                infra-cache-slabs: 8
+                key-cache-slabs: 8
+
+                # more cache memory, rrset=msg*2
+                rrset-cache-size: 512m
+                msg-cache-size: 256m
+
+                # Larger socket buffer.  OS may need config.
+                so-rcvbuf: 4m
+                so-sndbuf: 4m
+
                 cache-min-ttl: 10
                 cache-max-ttl: 86400
-                cache-max-negative-ttl: 600
+                cache-max-negative-ttl: 60
                 qname-minimisation: yes
                 prefetch: yes
                 hide-version: yes
                 log-queries: no
+
+                statistics-interval: 0
+                extended-statistics: yes
+                statistics-cumulative: no
+
                 domain-insecure: "dn42"
                 local-zone: "22.172.in-addr.arpa." nodefault
                 local-zone: "23.172.in-addr.arpa." nodefault
+
+              remote-control:
+                control-enable: yes
+                control-use-cert: no
 
               forward-zone:
                 name: "dn42"
