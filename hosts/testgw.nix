@@ -12,7 +12,6 @@
     dhcpcd.allowInterfaces = [ "eth0" ];
   };
 
-  boot.loader.grub.devices = [ "/dev/vda" ];
   fileSystems."/".device = "/dev/vda1";
 
   freifunk.gateway = {
