@@ -270,6 +270,9 @@ in
       ip46tables -I FORWARD 1 -i dn42-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
 
+      # hopglass
+      ip6tables -I nixos-fw 3 -i br-+ -p udp --dport 45123 -j nixos-fw-accept
+
       # bogus node with ffhh firmware
       ip6tables -I nixos-fw 1 -s fe80::62e3:27ff:feee:213e/128 -i br-ffmuc -j DROP
     '';
@@ -280,6 +283,62 @@ in
    ];
 
   systemd.services = {
+    hopglass-server = {
+      description = "hopglass server";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      preStart = ''
+        mkdir -p /var/lib/hopglass-server
+        chown -R nobody:nogroup /var/lib/hopglass-server
+
+        cat << EOF > /var/lib/hopglass-server/config.json
+        {
+          "receiver": {
+            "receivers": [
+              { "module": "announced",
+                "config": {
+                  "target": { "ip": "ff02::2:1001" },
+                  "port": 45123,
+                  "interval": {
+                    "statistics": 60,
+                    "nodeinfo": 300
+                  }
+                }
+              }
+            ],
+            "ifaces": [
+              ${concatSegments (name: scfg: ''
+                "br-${name}",
+              '')}
+              "fastd-babel"
+            ],
+            "storage": {
+              "file": "./raw.json"
+            },
+            "purge": {
+              "maxAge": 14
+            }
+          },
+          "provider": {
+            "offlineTime": 600
+          },
+          "webserver": {
+            "ip": "::1",
+            "port": 4000
+          }
+        }
+        EOF
+      '';
+      serviceConfig = {
+        User = "nobody";
+        Group = "nogroup";
+        WorkingDirectory = "/var/lib/hopglass-server";
+        PermissionsStartOnly = true;
+        ExecStart = "${ffpkgs.hopglass-server.package}/lib/node_modules/hopglass-server/hopglass-server.js";
+        CPUAffinity = "0";
+      };
+    };
+
     openvpn-airvpn.serviceConfig.CPUAffinity = "0";
 
     fastd-babel = {

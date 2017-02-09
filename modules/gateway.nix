@@ -247,7 +247,6 @@ in
               iptables -I nixos-fw 3 -i br-${name} -p udp --dport 67:68 --sport 67:68 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
-              ip6tables -I nixos-fw 3 -i br-${name} -p udp --dport 45123 -j nixos-fw-accept
 
               ${concatMapStrings (port: ''
                 iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
@@ -377,61 +376,6 @@ in
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         serviceConfig.ExecStart = "${pkgs.iperf}/bin/iperf -s -p 5201";
-      };
-      hopglass-server = {
-        description = "hopglass server";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "network.target" ];
-        preStart = ''
-          mkdir -p /var/lib/hopglass-server
-          chown -R nobody:nogroup /var/lib/hopglass-server
-
-          cat << EOF > /var/lib/hopglass-server/config.json
-          {
-            "receiver": {
-              "receivers": [
-                { "module": "announced",
-                  "config": {
-                    "target": { "ip": "ff02::2:1001" },
-                    "port": 45123,
-                    "interval": {
-                      "statistics": 60,
-                      "nodeinfo": 300
-                    }
-                  }
-                }
-              ],
-              "ifaces": [
-                ${concatSegments (name: scfg: ''
-                  "br-${name}",
-                '')}
-                "fastd-babel"
-              ],
-              "storage": {
-                "file": "./raw.json"
-              },
-              "purge": {
-                "maxAge": 14
-              }
-            },
-            "provider": {
-              "offlineTime": 600
-            },
-            "webserver": {
-              "ip": "::1",
-              "port": 4000
-            }
-          }
-          EOF
-        '';
-        serviceConfig = {
-          User = "nobody";
-          Group = "nogroup";
-          WorkingDirectory = "/var/lib/hopglass-server";
-          PermissionsStartOnly = true;
-          ExecStart = "${ffpkgs.hopglass-server.package}/lib/node_modules/hopglass-server/hopglass-server.js";
-          CPUAffinity = "0";
-        };
       };
     };
 
