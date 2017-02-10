@@ -764,7 +764,7 @@ include "${ffpkgs.icvpn-bird}/peers6";
       localAddress = "2001:608:a01::1";
       localPort = 42000;
       remotePort = 42000;
-      privateKey = "e7160476fd327cce3016b3f63cae875f808ad0b6c4d31b73641e1e1f881b8a0c"; # b35fb729e209fe5a077d74695da3ecfe577d9168d88b1a47b68580bcb4441937
+      privateKey = secrets.quicktun.fpletz;
       publicKey = "53cc53f3a6719314615e1e7fc303134db3e912c419f0587aab1fb6c35e94ef5b";
       upScript = ''
         ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.214.1 dev dn42-fpletz
@@ -779,7 +779,7 @@ include "${ffpkgs.icvpn-bird}/peers6";
       localAddress = "2001:608:a01::1";
       localPort = 42001;
       remotePort = 42001;
-      privateKey = "73bda6ec1d8cb10f2e2ff14ce8a3bec5c555cbb9905ffd30abb457580b1b478e"; # 3f46ac44ac4f0014c0a942879ad42b7a1bf40abbb2fa5a3f27a2a9ca364c9331
+      privateKey = secrets.quicktun.jomat;
       publicKey = "9692bf40e029fa39368f03b0c3348605c20cd1acc74a4d3643ce219e7e39c00c";
       upScript = ''
         ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.216.242 dev dn42-jomat
@@ -794,7 +794,7 @@ include "${ffpkgs.icvpn-bird}/peers6";
       localAddress = "2001:608:a01::1";
       localPort = 42002;
       remotePort = 42002;
-      privateKey = "86cfd964fc2768f4c178272514b4126a582fea1340f9ea1dc07ae2e598af6473"; # c4ba473e7454475f95c4b4d7b6b2c75c54376ad2eb96cb296b6b602b3b4d816b
+      privateKey = secrets.quicktun.chaossbg;
       publicKey = "8def7bdbfb32d4efb47c4adca8a0bce477207a4d07a222333f5a63ffffbd2053";
       upScript = ''
         ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.171.30 dev dn42-chaossbg
