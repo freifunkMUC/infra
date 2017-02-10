@@ -74,7 +74,31 @@
             recommendedGzipSettings = true;
             recommendedProxySettings = true;
           };
-      };
+
+        prometheus.nodeExporter =
+          { enable = true;
+            enabledCollectors =
+              [ "conntrack"
+                "diskstats"
+                "entropy"
+                "filefd"
+                "filesystem"
+                "loadavg"
+                "interrupts"
+                "meminfo"
+                "netdev"
+                "netstat"
+                "sockstat"
+                "stat"
+                "time"
+                "uname"
+                "vmstat"
+                "systemd"
+                "logind"
+              ];
+            port = 9100;
+          };
+    };
 
     environment.systemPackages = with pkgs;
       [ vim htop git ethtool python3 perf-tools unzip traceroute
@@ -124,25 +148,5 @@
           [ "hydra.mayflower.de:9knPU2SJ2xyI0KTJjtUKOGUVdR2/3cOB4VNDQThcfaY="
           ];
       };
-
-    nixpkgs.config = {
-      packageOverrides = pkgs: {
-        collectd = pkgs.collectd.override {
-          jdk = null;
-          libdbi = null;
-          cyrus_sasl = null;
-          libmodbus = null;
-          libnotify = null;
-          gdk_pixbuf = null;
-          libsigrok = null;
-          libvirt = null;
-          rabbitmq-c = null;
-          riemann = null;
-          rrdtool = null;
-          varnish = null;
-          yajl = null;
-        };
-      };
-    };
   };
 }

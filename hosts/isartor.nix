@@ -812,32 +812,6 @@ include "${ffpkgs.icvpn-bird}/peers6";
   services.openvpn.servers.dn42-fbnw = secrets.openvpn.dn42-fbnw;
   services.openvpn.servers.dn42-w0h = secrets.openvpn.dn42-w0h;
 
-  services.prometheus =
-    { nodeExporter = {
-        enable = true;
-        enabledCollectors = [
-          "conntrack"
-          "diskstats"
-          "entropy"
-          "filefd"
-          "filesystem"
-          "loadavg"
-          "interrupts"
-          "meminfo"
-          "netdev"
-          "netstat"
-          "sockstat"
-          "stat"
-          "time"
-          "uname"
-          "vmstat"
-          "systemd"
-          "logind"
-        ];
-        port = 9100;
-      };
-    };
-
   services.nginx =
     { enable = true;
       virtualHosts = let
