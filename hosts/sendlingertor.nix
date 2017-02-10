@@ -56,6 +56,18 @@ in
       proxy_cache_path /var/spool/nginx/cache-ffmuc-data keys_zone=isartor:32m inactive=2m;
       proxy_cache_path /var/spool/nginx/cache-osm keys_zone=osm:512m inactive=7d;
       proxy_cache_path /var/spool/nginx/cache-osmhot keys_zone=osmhot:2048m inactive=7d;
+
+      upstream osm {
+        server a.tile.openstreetmap.org;
+        #server b.tile.openstreetmap.org;
+        keepalive 8;
+      }
+
+      upstream osmhot {
+        server a.tile.openstreetmap.fr;
+        #server b.tile.openstreetmap.fr;
+        keepalive 4;
+      }
     '';
     virtualHosts = {
       "sendlingertor.ffmuc.net" = {
@@ -100,72 +112,6 @@ in
           '';
         };
       };
-      "a.tiles.map.ffmuc.net" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/osm".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #a.tile.openstreetmap.org;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osm/;
-          proxy_cache osm;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-        locations."/osmhot".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #a.tile.openstreetmap.fr;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osmhot/;
-          proxy_cache osmhot;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-      };
-      "b.tiles.map.ffmuc.net" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/osm".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #b.tile.openstreetmap.org;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osm/;
-          proxy_cache osm;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-        locations."/osmhot".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #b.tile.openstreetmap.fr;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osmhot/;
-          proxy_cache osmhot;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-      };
-      "c.tiles.map.ffmuc.net" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/osm".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #c.tile.openstreetmap.org;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osm/;
-          proxy_cache osm;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-        locations."/osmhot".extraConfig = ''
-          proxy_set_header Host ffmuc.net; #c.tile.openstreetmap.fr;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass https://ffmuc.net/map/tiles/osmhot/;
-          proxy_cache osmhot;
-          proxy_cache_valid  7d;
-          expires 7d;
-        '';
-      };
       "data.ffmuc.net" = {
         forceSSL = true;
         enableACME = true;
@@ -173,7 +119,32 @@ in
           root = "/nonexistant";
         };
       };
-    };
+    } // (pkgs.lib.genAttrs [
+        "a.tiles.map.ffmuc.net"
+        "b.tiles.map.ffmuc.net"
+        "c.tiles.map.ffmuc.net"
+      ] (name: {
+        forceSSL = true;
+        enableACME = true;
+        locations."/osm/".extraConfig = ''
+          proxy_set_header Host a.tile.openstreetmap.org;
+          proxy_http_version 1.1;
+          proxy_set_header Connection "";
+          proxy_pass http://osm/;
+          proxy_cache osm;
+          proxy_cache_valid 7d;
+          expires 1d;
+        '';
+        locations."/osmhot/".extraConfig = ''
+          proxy_set_header Host a.tile.openstreetmap.fr;
+          proxy_http_version 1.1;
+          proxy_set_header Connection "";
+          proxy_pass http://osmhot/hot/;
+          proxy_cache osmhot;
+          proxy_cache_valid 7d;
+          expires 1d;
+        '';
+      }));
   };
 
   services.grafana = {
