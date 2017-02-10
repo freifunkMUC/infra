@@ -20,5 +20,15 @@
 
       require = [ ./hosts/sendlingertor.nix ];
     };
+
+  stachus = { config, pkgs, ... }:
+    {
+      deployment = {
+        targetEnv = "none";
+        targetHost = "83.133.179.119";
+      };
+
+      require = [ ./hosts/stachus.nix ];
+    };
 }
 

@@ -1,120 +1,96 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  secrets = (import ../secrets);
+  secrets = (import ../secrets) { inherit pkgs; };
 in
 {
   imports = [
     ../modules/default.nix
-    ../modules/smartos-kvm.nix
+    ../modules/physical.nix
   ];
 
-  fileSystems."/".fsType = "ext4";
+  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.grub.enable = true;
+  boot.loader.grub.efiSupport = true;
+  boot.loader.grub.devices = [ "/dev/disk/by-id/scsi-3600508e00000000046d5bc3c9035cb0f" ];
+
+  boot.initrd.availableKernelModules = [ "uhci_hcd" "ehci_pci" "mptsas" "usb_storage" "usbhid" "sd_mod" ];
+  boot.kernelModules = [ "kvm-intel" "sg" ];
+
+  fileSystems."/" =
+    { device = "/dev/disk/by-uuid/6d2e635b-3d4f-44ab-9f7b-93519ebbeba5";
+      fsType = "ext4";
+    };
+
+  fileSystems."/boot" =
+    { device = "/dev/disk/by-uuid/8EB6-736E";
+      fsType = "vfat";
+    };
+
+  swapDevices =
+    [ { device = "/dev/disk/by-uuid/40ad9f64-4f8b-4e36-a8c2-7c38b856b4b5"; }
+    ];
+
+  nix.maxJobs = lib.mkDefault 24;
+  nix.extraOptions = ''
+    build-cores = 24
+  '';
 
   networking = {
-    dhcpcd = {
-      denyInterfaces = [ "tinc.backbone" ];
-    };
-    firewall = {
-      enable = false;
-    };
     hostName = "stachus";
-    interfaces.enp0s3 = {
+
+    useDHCP = true;
+    dhcpcd.allowInterfaces = [ "vlan-foo-uplink" ];
+
+    interfaces.vlan-transfer = {
+      ip4 = [ { address = "195.30.94.29"; prefixLength = 29; } ];
       ip6 = [
-        { address = "2001:608:a01:1::2"; prefixLength = 64; }
+        { address = "2001:608:a01::29"; prefixLength = 64; }
       ];
     };
-    defaultGateway6 = "2001:608:a01:1::1";
-   };
 
-   environment.systemPackages = with pkgs; [
-     tinc_pre babeld
-   ];
+    defaultGateway.address = "195.30.94.30";
+    defaultGateway.metric = 512;
+    defaultGateway6.address = "2001:608:a01::ffff";
+    defaultGateway6.metric = 2048;
+    nameservers = [ "2001:608:a01::53" ];
 
-  services = {
-    tinc.networks = {
-      backbone = {
-        package = pkgs.tinc_pre;
-        interfaceType = "tap";
-        extraConfig = ''
-          Mode = switch
-          ExperimentalProtocol = yes
-        '';
-      };
+    bonds.bond0 = {
+      interfaces = [
+        "eno1" "eno2" "eno3" "eno4"
+        "enp4s0f0" "enp4s0f1" "enp5s0f0" "enp5s0f1"
+      ];
+      mode = "802.3ad";
+      lacp_rate = "fast";
+      miimon = 100;
+      xmit_hash_policy = "layer3+4";
     };
-    collectd = {
-      enable = true;
-      extraConfig = ''
-        FQDNLookup true
-        Interval 30
 
-        LoadPlugin conntrack
-        LoadPlugin cpu
-        LoadPlugin df
-        LoadPlugin disk
-        LoadPlugin dns
-        LoadPlugin entropy
-        LoadPlugin interface
-        LoadPlugin load
-        LoadPlugin memory
-        LoadPlugin processes
-        LoadPlugin swap
-        LoadPlugin users
-        LoadPlugin write_graphite
-
-        <Plugin df>
-          FSType rootfs
-          FSType sysfs
-          FSType proc
-          FSType devtmpfs
-          FSType devpts
-          FSType tmpfs
-          FSType fusectl
-          FSType cgroup
-          IgnoreSelected true
-        </Plugin>
-
-        <Plugin interface>
-          Interface "lo"
-          IgnoreSelected true
-        </Plugin>
-
-        <Plugin write_graphite>
-          <Node "${secrets.stats.bpletza.host}">
-            Host "${secrets.stats.bpletza.host}"
-            Port "${toString secrets.stats.bpletza.port}"
-            Protocol "tcp"
-            LogSendErrors true
-            Prefix "servers."
-            StoreRates true
-            AlwaysAppendDS false
-            SeparateInstances false
-            EscapeCharacter "_"
-          </Node>
-        </Plugin>
-      '';
+    vlans = {
+      vlan-mgmt = {
+        id = 2;
+        interface = "bond0";
+      };
+      vlan-transfer = {
+        id = 3;
+        interface = "bond0";
+      };
+      vlan-service = {
+        id = 4;
+        interface = "bond0";
+      };
+      vlan-foo-uplink = {
+        id = 420;
+        interface = "bond0";
+      };
     };
   };
 
-  systemd.services = {
-    babeld = let
-      babeldConf = pkgs.writeText "babeld.conf" ''
-        redistribute ip ::/0 le 0 proto 3 metric 128
-        redistribute ip 2001:608:a01::/48 le 127 metric 128
-        redistribute local deny
-        redistribute deny
-        in ip 0.0.0.0/32 le 0 deny
-        in ip ::/128 le 0 deny
-      '';
-      in {
-        description = "Babel routing daemon";
-        wantedBy = [ "network.target" "multi-user.target" ];
-        after = [ "tinc.backbone" ];
-        serviceConfig = {
-          ExecStart =
-            "${pkgs.babeld}/bin/babeld -c ${babeldConf} tinc.backbone";
-        };
-      };
-  };
+  services.smartd.devices = [
+    { device = "/dev/sg0"; }
+    { device = "/dev/sg1"; }
+  ];
+
+  users.extraUsers.root.password = secrets.rootPassword;
 }
 
