@@ -307,9 +307,9 @@ in
               }
             ],
             "ifaces": [
-              ${concatSegments (name: scfg: ''
-                "br-${name}",
-              '')}
+              "br-ffmuc",
+              "br-umland",
+              "br-welcome",
               "fastd-babel"
             ],
             "storage": {
@@ -449,10 +449,9 @@ in
       };
   };
 
-  services.dhcpd4 =
+  services.dhcpd6 =
     { enable = true;
       interfaces = [ "fastd-babel" ];
-      extraFlags = [ "-6" ];
       configFile = pkgs.writeText "dhpcd.conf" ''
         authoritative;
         log-facility local1;

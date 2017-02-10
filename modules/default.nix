@@ -6,20 +6,20 @@
     time.timeZone = "UTC";
 
     boot =
-    { kernel.sysctl =
-        { "net.ipv6.conf.default.autoconf" = 0;
-          "net.ipv6.conf.all.autoconf" = 0;
-          "vm.overcommit_memory" = 1;
-          "kernel.panic" = 1;
-        };
-      tmpOnTmpfs = true;
-      kernelPackages = pkgs.linuxPackages_4_9;
-      loader =
-        { timeout = lib.mkDefault 1;
-          grub.splashImage = null;
-          grub.version = lib.mkDefault 2;
-        };
-    };
+      { kernel.sysctl =
+          { "net.ipv6.conf.default.autoconf" = 0;
+            "net.ipv6.conf.all.autoconf" = 0;
+            "vm.overcommit_memory" = 1;
+            "kernel.panic" = 1;
+          };
+        tmpOnTmpfs = true;
+        kernelPackages = pkgs.linuxPackages_latest;
+        loader =
+          { timeout = lib.mkDefault 1;
+            grub.splashImage = null;
+            grub.version = lib.mkDefault 2;
+          };
+      };
 
     networking =
       { domain = lib.mkDefault "ffmuc.net";
@@ -133,11 +133,7 @@
       };
 
     nix =
-      { extraOptions =
-          ''
-            auto-optimise-store = true
-          '';
-        gc =
+      { gc =
           { automatic = true;
             options = "--delete-older-than 2d";
           };
