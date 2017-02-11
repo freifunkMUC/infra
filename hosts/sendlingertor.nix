@@ -50,7 +50,7 @@ in
 
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
-  services.nginx = {
+  services.nginx = rec {
     enable = true;
     appendHttpConfig = ''
       proxy_cache_path /var/spool/nginx/cache-ffmuc-data keys_zone=isartor:32m inactive=2m;
@@ -117,9 +117,7 @@ in
       "data.ffmuc.net" = {
         forceSSL = true;
         enableACME = true;
-        locations."/" = {
-          root = "/nonexistant";
-        };
+        locations."/" = virtualHosts."map.ffmuc.net".locations."/data";
       };
     } // (pkgs.lib.genAttrs [
         "a.tiles.map.ffmuc.net"
