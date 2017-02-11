@@ -270,6 +270,10 @@ in
       ip46tables -I FORWARD 1 -i dn42-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
 
+      # main dns recursor and cache for infrastructure
+      ip6tables -I nixos-fw 3 -s 2001:608:a01::/48 -d 2001:608:a01::53 -p udp --dport 53 -j nixos-fw-accept
+      ip6tables -I nixos-fw 3 -s 2001:608:a01::/48 -d 2001:608:a01::53 -p tcp --dport 53 -j nixos-fw-accept
+
       # hopglass
       ip6tables -I nixos-fw 3 -i br-+ -p udp --dport 45123 -j nixos-fw-accept
 

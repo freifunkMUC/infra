@@ -46,7 +46,7 @@ in
   };
   networking.defaultGateway = "195.30.94.30";
   networking.defaultGateway6 = "2001:608:a01::ffff";
-  networking.nameservers = [ "8.8.8.8" "8.8.4.4" ];
+  networking.nameservers = [ "2001:608:a01::53" ];
 
   networking.firewall.allowedTCPPorts = [ 80 443 ];
 
