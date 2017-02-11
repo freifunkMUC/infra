@@ -56,6 +56,8 @@ in
       proxy_cache_path /var/spool/nginx/cache-ffmuc-data keys_zone=isartor:32m inactive=2m;
       proxy_cache_path /var/spool/nginx/cache-osm keys_zone=osm:512m inactive=7d;
       proxy_cache_path /var/spool/nginx/cache-osmhot keys_zone=osmhot:2048m inactive=7d;
+      proxy_cache_lock on;
+      proxy_cache_lock_age 10s;
 
       upstream osm {
         server a.tile.openstreetmap.org;
