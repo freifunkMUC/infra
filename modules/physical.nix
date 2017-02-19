@@ -24,7 +24,7 @@
 
     powerManagement =
       { enable = true;
-        cpuFreqGovernor = "performance";
+        cpuFreqGovernor = "ondemand";
       };
 
     hardware.firmware = with pkgs; [ firmwareLinuxNonfree ];
