@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   secrets = (import ../secrets) { inherit pkgs; };
@@ -53,6 +53,8 @@ in
   services.nginx = rec {
     enable = true;
     appendHttpConfig = ''
+      resolver [${lib.head config.networking.nameservers}];
+
       proxy_cache_path /var/spool/nginx/cache-ffmuc-data keys_zone=isartor:32m inactive=2m;
       proxy_cache_path /var/spool/nginx/cache-osm keys_zone=osm:512m inactive=7d;
       proxy_cache_path /var/spool/nginx/cache-osmhot keys_zone=osmhot:2048m inactive=7d;
@@ -123,28 +125,32 @@ in
         "a.tiles.map.ffmuc.net"
         "b.tiles.map.ffmuc.net"
         "c.tiles.map.ffmuc.net"
-      ] (name: {
-        forceSSL = true;
-        enableACME = true;
-        locations."/osm/".extraConfig = ''
-          proxy_set_header Host a.tile.openstreetmap.org;
+      ] (name: let commonLocationCfg = ''
           proxy_http_version 1.1;
           proxy_set_header Connection "";
-          proxy_pass http://osm/;
           proxy_cache osm;
           proxy_cache_valid 7d;
-          expires 1d;
+          expires max;
         '';
-        locations."/osmhot/".extraConfig = ''
-          proxy_set_header Host a.tile.openstreetmap.fr;
-          proxy_http_version 1.1;
-          proxy_set_header Connection "";
-          proxy_pass http://osmhot/hot/;
-          proxy_cache osmhot;
-          proxy_cache_valid 7d;
-          expires 1d;
-        '';
-      }));
+      in {
+        forceSSL = true;
+        enableACME = true;
+        locations."/osm/" = {
+          proxyPass = "http://osm/";
+          extraConfig = ''
+            proxy_set_header Host a.tile.openstreetmap.org;
+            ${commonLocationCfg}
+          '';
+        };
+        locations."/osmhot/" = {
+          proxyPass = "http://osmhot/hot/";
+          extraConfig = ''
+            proxy_set_header Host a.tile.openstreetmap.fr;
+            ${commonLocationCfg}
+          '';
+        };
+      })
+    );
   };
 
   services.grafana = {
