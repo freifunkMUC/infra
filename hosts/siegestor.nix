@@ -37,7 +37,9 @@ in
   '';
 
   networking = {
-    hostName = "stachus";
+    hostName = "siegestor";
+
+    firewall.allowedTCPPorts = [ 80 443 ];
 
     useDHCP = true;
     dhcpcd.allowInterfaces = [ "vlan-foo-uplink" ];
@@ -90,6 +92,21 @@ in
     { device = "/dev/sg0"; }
     { device = "/dev/sg1"; }
   ];
+
+  services.nginx = {
+    enable = true;
+    virtualHosts = {
+      "siegestor.ffmuc.net" = {
+        forceSSL = true;
+        enableACME = true;
+        locations = {
+          "/.metrics/node/" = {
+            proxyPass = "http://[::1]:9100/";
+          };
+        };
+      };
+    };
+  };
 
   users.extraUsers.root.password = secrets.rootPassword;
 }

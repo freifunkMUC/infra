@@ -21,14 +21,14 @@
       require = [ ./hosts/sendlingertor.nix ];
     };
 
-  stachus = { config, pkgs, ... }:
+  siegestor = { config, pkgs, ... }:
     {
       deployment = {
         targetEnv = "none";
-        targetHost = "83.133.179.119";
+        targetHost = "siegestor.ffmuc.net";
       };
 
-      require = [ ./hosts/stachus.nix ];
+      require = [ ./hosts/siegestor.nix ];
     };
 }
 

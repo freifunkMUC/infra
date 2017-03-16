@@ -275,6 +275,9 @@ in
             { targets = [ "isartor.ffmuc.net" ];
               labels = { alias = "isartor.ffmuc.net"; };
             }
+            { targets = [ "siegestor.ffmuc.net" ];
+              labels = { alias = "siegestor.ffmuc.net"; };
+            }
           ];
         }
        ];
