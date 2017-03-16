@@ -166,6 +166,17 @@ in
 
   services.prometheus =
     { enable = true;
+      extraFlags = [
+        "-web.external-url=https://sendlingertor.ffmuc.net/prometheus/"
+        "-storage.local.retention 8760h"
+        "-storage.local.series-file-shrink-ratio 0.3"
+        "-storage.local.memory-chunks 2097152"
+        "-storage.local.max-chunks-to-persist 1048576"
+        "-storage.local.index-cache-size.fingerprint-to-metric 2097152"
+        "-storage.local.index-cache-size.fingerprint-to-timerange 1048576"
+        "-storage.local.index-cache-size.label-name-to-label-values 2097152"
+        "-storage.local.index-cache-size.label-pair-to-fingerprints 41943040"
+      ];
       alertmanagerURL = [ "http://localhost:9093/alertmanager" ];
       rules = [
         ''
@@ -260,7 +271,6 @@ in
           }
         ''
       ];
-      extraFlags = [ "-web.external-url=https://sendlingertor.ffmuc.net/prometheus/" ];
       scrapeConfigs = [
         { job_name = "hopglass";
           scrape_interval = "60s";
