@@ -235,6 +235,7 @@ in
           allowedTCPPorts = [ 5201 69 ];
           allowedUDPPorts = [ 69 ];
           checkReversePath = false;
+          logRefusedConnections = false;
           extraCommands = ''
             ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
             ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept

@@ -13,7 +13,7 @@
             "kernel.panic" = 1;
           };
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_latest;
+        kernelPackages = pkgs.linuxPackages_4_9;
         loader =
           { timeout = lib.mkDefault 1;
             grub.splashImage = null;
@@ -131,6 +131,8 @@
         defaultLocale = "en_US.UTF-8";
         supportedLocales = [ "en_US.UTF-8/UTF-8" ];
       };
+
+    sound.enable = false;
 
     nix =
       { gc =
