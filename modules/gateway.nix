@@ -55,6 +55,11 @@ in
     freifunk.gateway = {
       enable = mkEnableOption "Freifunk Gateway Config";
 
+      isRouter = mkOption {
+        type = types.bool;
+        default = true;
+      };
+
       externalInterface = mkOption {
         type = types.str;
         description = "External Interface";
@@ -115,6 +120,11 @@ in
             };
 
             ra.rdnss = mkOption {
+              type = types.listOf types.str;
+              default = [];
+            };
+
+            meshInterfaces = mkOption {
               type = types.listOf types.str;
               default = [];
             };
@@ -237,6 +247,23 @@ in
           checkReversePath = false;
           logRefusedConnections = false;
           extraCommands = ''
+            ip46tables -F FORWARD
+            ip46tables -P FORWARD DROP
+
+            ${concatSegments (name: scfg: concatStrings (mapAttrsToList (name: fcfg: ''
+              iptables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp \! -s 195.30.94.25/29 --dport ${toString fcfg.listenPort} -j nixos-fw-accept
+              ip6tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp \! -s 2001:608:a01::/48 --dport ${toString fcfg.listenPort} -j nixos-fw-accept
+            '') scfg.fastdConfigs))}
+
+            iptables -t nat -F PREROUTING
+            iptables -t nat -F POSTROUTING
+            ip46tables -t mangle -F POSTROUTING
+
+            ${concatSegments (name: scfg: concatStrings (map ({ from, to }: ''
+              ip46tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x1=0x1" -j REDIRECT --to-ports ${toString to}
+            '') scfg.portBalancings))}
+
+          '' + (optionalString cfg.isRouter ''
             ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
             ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept
             ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
@@ -254,14 +281,8 @@ in
                 iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
                 iptables -A PREROUTING -t mangle -i br-${name} -p tcp --dport ${toString port} -j MARK --set-mark 5
               '') [ 80 443 8080 8443 9090 143 993 110 587 5222 5269 53 655 1149 123 4500 1293 500 5060 5061 4569 3478 22 2223 ]}
-
-              ${concatStrings (mapAttrsToList (name: fcfg: ''
-                ip46tables -I nixos-fw 3 -i ${cfg.externalInterface} -p udp --dport ${toString fcfg.listenPort} -j nixos-fw-accept
-              '') scfg.fastdConfigs)}
             '')}
 
-            ip46tables -F FORWARD
-            ip46tables -P FORWARD DROP
             ip46tables -A FORWARD -i br-+ -o br-+ -j ACCEPT
             ip6tables -A FORWARD -i fastd-babel -o br-+ -j ACCEPT
             ip6tables -A FORWARD -i br-+ -o fastd-babel -j ACCEPT
@@ -277,19 +298,11 @@ in
             iptables -A FORWARD -j REJECT --reject-with icmp-admin-prohibited
             ip6tables -A FORWARD -j REJECT --reject-with icmp6-adm-prohibited
 
-            iptables -t nat -F PREROUTING
-            iptables -t nat -F POSTROUTING
-            ip46tables -t mangle -F POSTROUTING
-
-            ${concatSegments (name: scfg: concatStrings (map ({ from, to }: ''
-              ip46tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x1=0x1" -j REDIRECT --to-ports ${toString to}
-            '') scfg.portBalancings))}
-
             ${concatMapStrings (if4: ''
               iptables -t nat -A POSTROUTING -o ${if4} -j MASQUERADE
               iptables -t mangle -A POSTROUTING -o ${if4} -p tcp -m tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1200
             '') cfg.ip4Interfaces}
-          '';
+          '');
         };
         bridges = fold (a: b: a // b) {} (mapSegments (name: scfg: {
           "br-${name}" = {
@@ -337,7 +350,9 @@ in
           serviceConfig.Type = "oneshot";
           path = with pkgs; [ iproute batctl ];
           script = ''
-            batctl -m bat-${name} gw server 1000000/1000000
+            ${optionalString cfg.isRouter ''
+              batctl -m bat-${name} gw server 1000000/1000000
+            ''}
             batctl -m bat-${name} it 10000
             ip link set bat-${name} down
             ip link set bat-${name} address ${genMacAddr scfg.baseMacAddress "fa"}
@@ -345,6 +360,9 @@ in
             ip link set br-${name} down
             ip link set bat-${name} master br-${name}
             ip link set br-${name} up
+            ${concatStrings (flip map scfg.meshInterfaces (mif: ''
+              batctl -m bat-${name} if add ${mif}
+            ''))}
             systemctl restart network-addresses-br-${name}.service
             systemctl start alfred-${name}.service batadv-vis-${name}.service
           '';
@@ -405,7 +423,7 @@ in
         bmon
       ];
 
-    services =
+    services = mkIf cfg.isRouter
       { dnsmasq =
           { enable = true;
             resolveLocalQueries = false;

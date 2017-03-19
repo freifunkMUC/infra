@@ -107,6 +107,7 @@ in
         dhcpRanges = [ "10.80.34.0,10.80.53.255,255.255.224.0,1h" ];
         ra.prefixes = [ "2001:608:a01:2::/64" ];
         ra.rdnss = [ "2001:608:a01::53" ];
+        meshInterfaces = [ "ffmuc-mesh" ];
         fastdConfigs = let
           secret = secrets.fastd.gw03.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
@@ -158,6 +159,7 @@ in
         dhcpRanges = [ "10.80.68.0,10.80.90.255,255.255.224.0,1h" ];
         ra.prefixes = [ "2001:608:a01:3::/64" ];
         ra.rdnss = [ "2001:608:a01::53" ];
+        meshInterfaces = [ "welcome-mesh" ];
         fastdConfigs = let
           secret = secrets.fastd.gwf02.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
@@ -201,6 +203,7 @@ in
         dhcpRanges = [ "10.80.98.0,10.80.111.255,255.255.224.0,1h" ];
         ra.prefixes = [ "2001:608:a01:4::/64" ];
         ra.rdnss = [ "2001:608:a01::53" ];
+        meshInterfaces = [ "umland-mesh" ];
         fastdConfigs = let
           secret = secrets.fastd.gwu02.secret;
           listenAddresses = [ "195.30.94.27" "[2001:608:a01::1]" ];
@@ -246,13 +249,32 @@ in
         { address = "2001:608:a01::53"; prefixLength = 64; }
       ];
     };
-    interfaces.eno1 = {
+    interfaces.vlan-service = {
       ip4 = [ { address = "195.30.94.49"; prefixLength = 28; } ];
       ip6 = [ { address = "2001:608:a01:1::2"; prefixLength = 64; } ];
     };
     interfaces."tinc.icvpn" = {
       ip4 = [ { address = "10.207.1.80"; prefixLength = 16; } ];
       ip6 = [ { address = "fec0::a:cf:1:80"; prefixLength = 96; } ];
+    };
+
+    vlans = {
+      vlan-service = {
+        id = 4;
+        interface = "eno1";
+      };
+      ffmuc-mesh = {
+        id = 10;
+        interface = "eno1";
+      };
+      welcome-mesh = {
+        id = 11;
+        interface = "eno1";
+      };
+      umland-mesh = {
+        id = 12;
+        interface = "eno1";
+      };
     };
 
     defaultGateway = "195.30.94.30";
