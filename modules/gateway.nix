@@ -249,6 +249,7 @@ in
               ip46tables -I nixos-fw 3 -i br-${name} -p udp --dport 53 -j nixos-fw-accept
               ip46tables -I nixos-fw 3 -i br-${name} -p tcp --dport 53 -j nixos-fw-accept
 
+              iptables -A PREROUTING -t mangle -i br-${name} -p icmp --icmp-type echo-request -j MARK --set-mark 5
               ${concatMapStrings (port: ''
                 iptables -A PREROUTING -t mangle -i br-${name} -p udp --dport ${toString port} -j MARK --set-mark 5
                 iptables -A PREROUTING -t mangle -i br-${name} -p tcp --dport ${toString port} -j MARK --set-mark 5
@@ -302,22 +303,25 @@ in
         }));
         dhcpcd.allowInterfaces = [ ];
         localCommands = ''
-          ip route replace unreachable default metric 100 table 42
-          ${concatSegments (name: scfg: ''
-            ip rule add iif br-${name} lookup 42
-            ip rule add iif br-${name} fwmark 5 lookup 5
-          '')}
+          set -x
+        '' + (optionalString cfg.isRouter ''
+            ip route replace unreachable default metric 100 table 42
+            ${concatSegments (name: scfg: ''
+              ip rule add iif br-${name} lookup 42
+              ip rule add iif br-${name} fwmark 5 lookup 5
+            '')}
+        '') + ''
           ${cfg.networkingLocalCommands}
 
-          ip route add unreachable 10/8
-          ip route add unreachable 10/8 table 5
-          ip route add unreachable 10/8 table 42
-          ip route add unreachable 172.16/12
-          ip route add unreachable 172.16/12 table 5
-          ip route add unreachable 172.16/12 table 42
-          ip route add unreachable 192.168/16
-          ip route add unreachable 192.168/16 table 5
-          ip route add unreachable 192.168/16 table 42
+          ip route replace unreachable 10/8
+          ip route replace unreachable 10/8 table 5
+          ip route replace unreachable 10/8 table 42
+          ip route replace unreachable 172.16/12
+          ip route replace unreachable 172.16/12 table 5
+          ip route replace unreachable 172.16/12 table 42
+          ip route replace unreachable 192.168/16
+          ip route replace unreachable 192.168/16 table 5
+          ip route replace unreachable 192.168/16 table 42
         '';
       };
 
@@ -471,6 +475,10 @@ in
                 statistics-interval: 0
                 extended-statistics: yes
                 statistics-cumulative: no
+
+                local-data-ptr: "2001:608:a01:2::13 isartor.ffmuc.net"
+                local-data-ptr: "10.80.32.13 isartor.ffmuc.net"
+                local-data-ptr: "2001:608:a01::31 ipv6.space.ffmuc.net"
 
                 domain-insecure: "dn42"
                 local-zone: "22.172.in-addr.arpa." nodefault

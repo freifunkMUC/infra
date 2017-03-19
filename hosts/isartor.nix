@@ -81,6 +81,7 @@ in
     ip4Interfaces = [ "tun0" "eno2" ];
     ip6Interface = "eno2";
     networkingLocalCommands = ''
+      ip rule del priority 30 || true
       ip rule add priority 30 from 195.30.94.49/32 lookup 5
       ip route replace default via 195.30.94.30 table 5
       ip route replace 195.30.94.48/28 via 195.30.94.26 table 5
