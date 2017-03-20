@@ -306,7 +306,7 @@ in
   };
 
    environment.systemPackages = with pkgs; [
-     tinc_pre babeld ipmitool jool-cli dnsutils pciutils
+     tinc_pre babeld jool-cli
    ];
 
   systemd.services = {

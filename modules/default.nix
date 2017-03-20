@@ -69,7 +69,8 @@
           '';
 
         nginx =
-          { recommendedOptimisation = true;
+          { package = pkgs.nginxMainline;
+            recommendedOptimisation = true;
             recommendedTlsSettings = true;
             recommendedGzipSettings = true;
             recommendedProxySettings = true;
@@ -104,7 +105,7 @@
       [ vim htop git ethtool python3 perf-tools unzip traceroute
         tcpdump iptables jnettop iotop nmap rsync dstat wget
         rxvt_unicode.terminfo f2fs-tools strace mtr lsof tmux
-        screen pciutils
+        screen pciutils dnsutils
       ];
 
     programs.bash.enableCompletion = true;
