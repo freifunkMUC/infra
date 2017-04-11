@@ -504,25 +504,11 @@ in
                 local-data-ptr: "10.80.32.13 isartor.ffmuc.net"
                 local-data-ptr: "2001:608:a01::31 ipv6.space.ffmuc.net"
 
-                domain-insecure: "dn42"
-                local-zone: "22.172.in-addr.arpa." nodefault
-                local-zone: "23.172.in-addr.arpa." nodefault
-
               remote-control:
                 control-enable: yes
                 control-use-cert: no
 
-              forward-zone:
-                name: "dn42"
-                forward-addr: 172.23.0.53
-
-              forward-zone:
-                name: "22.172.in-addr.arpa"
-                forward-addr: 172.23.0.53
-
-              forward-zone:
-                name: "23.172.in-addr.arpa"
-                forward-addr: 172.23.0.53
+              include: ${ffpkgs.icvpn-bird}/unbound.conf
             '';
           };
         radvd = let

@@ -52,23 +52,10 @@ in
               prefetch: yes
               hide-version: yes
               log-queries: no
-              domain-insecure: "dn42"
-              local-zone: "22.172.in-addr.arpa." nodefault
-              local-zone: "23.172.in-addr.arpa." nodefault
               module-config: "dns64 validator iterator"
               dns64-prefix: 2001:608:a01:0:64:ff9b::/96  # transfer-netz von space
 
-            forward-zone:
-              name: "dn42"
-              forward-addr: 172.23.0.53
-
-            forward-zone:
-              name: "22.172.in-addr.arpa"
-              forward-addr: 172.23.0.53
-
-            forward-zone:
-              name: "23.172.in-addr.arpa"
-              forward-addr: 172.23.0.53
+            include: ${ffpkgs.icvpn-bird}/unbound.conf
           '';
         };
       };
@@ -543,8 +530,6 @@ function is_self_net() {
   ];
 }
 
-include "${../static/bird_filter_dn42.conf}";
-
 roa table dn42_roa {
   include "${../static/bird_roa_dn42.conf}";
   include "${ffpkgs.icvpn-bird}/roa4";
@@ -614,17 +599,17 @@ template bgp dnpeers {
       print "[", proto, "] ROA check unknown for ", net, " ASN ", bgp_path.last;
       reject;
     }
-    if is_valid_network() && !is_self_net() then {
+    if !is_self_net() then {
       accept;
     }
     print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
     reject;
   };
   export filter {
-    if is_valid_network() then {
+    #if is_valid_network() then {
       accept;
-    }
-    reject;
+    #}
+    #reject;
   };
   route limit 10000;
 }
@@ -640,7 +625,7 @@ template bgp icpeers from dnpeers {
       reject;
     }
     gw = from;
-    if is_valid_network() && !is_self_net() then {
+    if !is_self_net() then {
       accept;
     }
     print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
@@ -703,8 +688,6 @@ function is_self_net() {
   ];
 }
 
-include "${../static/bird6_filter_dn42.conf}";
-
 roa table dn42_roa {
   include "${../static/bird6_roa_dn42.conf}";
   include "${ffpkgs.icvpn-bird}/roa6";
@@ -738,17 +721,17 @@ template bgp dnpeers {
       print "[", proto, "] ROA check unknown for ", net, " ASN ", bgp_path.last;
       reject;
     }
-    if is_valid_network() && !is_self_net() then {
+    if !is_self_net() then {
       accept;
     }
     print "[", proto, "] rejected invalid route ", net, " ASN ", bgp_path.last;
     reject;
   };
   export filter {
-    if is_valid_network() then {
+    #if is_valid_network() then {
       accept;
-    }
-    reject;
+    #}
+    #reject;
   };
   route limit 10000;
 }
