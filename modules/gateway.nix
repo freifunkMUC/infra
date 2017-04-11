@@ -259,8 +259,15 @@ in
             iptables -t nat -F POSTROUTING
             ip46tables -t mangle -F POSTROUTING
 
-            ${concatSegments (name: scfg: concatStrings (map ({ from, to }: ''
-              ip46tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x1=0x1" -j REDIRECT --to-ports ${toString to}
+            ${concatSegments (name: scfg: concatStrings (map ({ from, to1, to2, to3 ? to1, to4 ? to2 }: ''
+              iptables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x3=0x0" -j REDIRECT --to-ports ${toString to1}
+              iptables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x3=0x1" -j REDIRECT --to-ports ${toString to2}
+              iptables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x3=0x2" -j REDIRECT --to-ports ${toString to3}
+              iptables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0xc&0x3=0x3" -j REDIRECT --to-ports ${toString to4}
+              ip6tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0x14&0x3=0x0" -j REDIRECT --to-ports ${toString to1}
+              ip6tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0x14&0x3=0x1" -j REDIRECT --to-ports ${toString to2}
+              ip6tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0x14&0x3=0x2" -j REDIRECT --to-ports ${toString to3}
+              ip6tables -t nat -A PREROUTING -i ${cfg.externalInterface} -p udp -m udp --dport ${toString from} -m u32 --u32 "0x14&0x3=0x3" -j REDIRECT --to-ports ${toString to4}
             '') scfg.portBalancings))}
 
           '' + (optionalString cfg.isRouter ''
@@ -343,8 +350,7 @@ in
         "bat-${name}-netdev" = {
           description = "batman interface bat-${name}";
           #wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" ];
-          #after = [ "br0-netdev.service" ];
+          after = [ "network-interfaces.target" ];
           #requires = [ "br-${name}-netdev.service" ];
 
           serviceConfig.Type = "oneshot";

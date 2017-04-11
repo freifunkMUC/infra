@@ -141,30 +141,50 @@ in
           secret = secrets.fastd.gw04.secret;
           listenAddresses = [ "195.30.94.29" "[2001:608:a01::29]" ];
         in {
-          mesh0 = {
-            inherit secret listenAddresses;
-            listenPort = 10000;
-            mtu = 1426;
-          };
-          mesh1 = {
+          mesh00 = {
             inherit secret listenAddresses;
             listenPort = 10099;
             mtu = 1426;
           };
-          mesh2 = {
-            inherit secret listenAddresses;
-            listenPort = 10001;
-            mtu = 1280;
-          };
-          mesh3 = {
+          mesh01 = {
             inherit secret listenAddresses;
             listenPort = 10098;
+            mtu = 1426;
+          };
+          mesh02 = {
+            inherit secret listenAddresses;
+            listenPort = 10097;
+            mtu = 1426;
+          };
+          mesh03 = {
+            inherit secret listenAddresses;
+            listenPort = 10096;
+            mtu = 1426;
+          };
+          mesh10 = {
+            inherit secret listenAddresses;
+            listenPort = 10090;
             mtu = 1280;
           };
-        };
+          mesh11 = {
+            inherit secret listenAddresses;
+            listenPort = 10091;
+            mtu = 1280;
+          };
+          mesh12 = {
+            inherit secret listenAddresses;
+            listenPort = 10092;
+            mtu = 1280;
+          };
+          mesh13 = {
+            inherit secret listenAddresses;
+            listenPort = 10093;
+            mtu = 1280;
+          };
+         };
         portBalancings = [
-          { from = 10000; to = 10099; }
-          { from = 10001; to = 10098; }
+          { from = 10000; to1 = 10099; to2 = 10098; to3 = 10097; to4 = 10096; }
+          { from = 10001; to1 = 10090; to2 = 10091; to3 = 10092; to4 = 10093; }
         ];
       };
       welcome = {
@@ -181,30 +201,50 @@ in
           secret = secrets.fastd.gwf01.secret;
           listenAddresses = [ "195.30.94.29" "[2001:608:a01::29]" ];
         in {
-          mesh0 = {
-            inherit secret listenAddresses;
-            listenPort = 11000;
-            mtu = 1426;
-          };
-          mesh1 = {
+          mesh00 = {
             inherit secret listenAddresses;
             listenPort = 11099;
             mtu = 1426;
           };
-          mesh2 = {
-            inherit secret listenAddresses;
-            listenPort = 11001;
-            mtu = 1280;
-          };
-          mesh3 = {
+          mesh01 = {
             inherit secret listenAddresses;
             listenPort = 11098;
+            mtu = 1426;
+          };
+          mesh02 = {
+            inherit secret listenAddresses;
+            listenPort = 11097;
+            mtu = 1426;
+          };
+          mesh03 = {
+            inherit secret listenAddresses;
+            listenPort = 11096;
+            mtu = 1426;
+          };
+          mesh10 = {
+            inherit secret listenAddresses;
+            listenPort = 11090;
+            mtu = 1280;
+          };
+          mesh11 = {
+            inherit secret listenAddresses;
+            listenPort = 11091;
+            mtu = 1280;
+          };
+          mesh12 = {
+            inherit secret listenAddresses;
+            listenPort = 11092;
+            mtu = 1280;
+          };
+          mesh13 = {
+            inherit secret listenAddresses;
+            listenPort = 11093;
             mtu = 1280;
           };
         };
         portBalancings = [
-          { from = 11000; to = 11099; }
-          { from = 11001; to = 11098; }
+          { from = 11000; to1 = 11099; to2 = 11098; to3 = 11097; to4 = 11096; }
+          { from = 11001; to1 = 11090; to2 = 11091; to3 = 11092; to4 = 11093; }
         ];
       };
       umland = {
@@ -221,30 +261,50 @@ in
           secret = secrets.fastd.gwu01.secret;
           listenAddresses = [ "195.30.94.29" "[2001:608:a01::29]" ];
         in {
-          mesh0 = {
-            inherit secret listenAddresses;
-            listenPort = 10011;
-            mtu = 1426;
-          };
-          mesh1 = {
+          mesh00 = {
             inherit secret listenAddresses;
             listenPort = 10089;
             mtu = 1426;
           };
-          mesh3 = {
+          mesh01 = {
             inherit secret listenAddresses;
-            listenPort = 10015;
+            listenPort = 10088;
+            mtu = 1426;
+          };
+          mesh02 = {
+            inherit secret listenAddresses;
+            listenPort = 10087;
+            mtu = 1426;
+          };
+          mesh03 = {
+            inherit secret listenAddresses;
+            listenPort = 10086;
+            mtu = 1426;
+          };
+          mesh10 = {
+            inherit secret listenAddresses;
+            listenPort = 10080;
             mtu = 1280;
           };
-          mesh4 = {
+          mesh11 = {
             inherit secret listenAddresses;
-            listenPort = 10085;
+            listenPort = 10081;
+            mtu = 1280;
+          };
+          mesh12 = {
+            inherit secret listenAddresses;
+            listenPort = 10082;
+            mtu = 1280;
+          };
+          mesh13 = {
+            inherit secret listenAddresses;
+            listenPort = 10083;
             mtu = 1280;
           };
         };
         portBalancings = [
-          { from = 10011; to = 10089; }
-          { from = 10015; to = 10085; }
+          { from = 10011; to1 = 10089; to2 = 10088; to3 = 10087; to4 = 10086; }
+          { from = 10015; to1 = 10080; to2 = 10081; to3 = 10082; to4 = 10083; }
         ];
       };
     };
