@@ -641,10 +641,6 @@ protocol bgp dn42_jomat from dnpeers {
   neighbor 172.23.216.242 as 64773;
 };
 
-protocol bgp dn42_chaossbg from dnpeers {
-  neighbor 172.23.171.30 as 4242421420;
-};
-
 protocol bgp AS4242421340 from dnpeers {
   neighbor 172.20.176.1 as 4242421340;
 };
@@ -746,10 +742,6 @@ protocol bgp dn42_jomat from dnpeers {
   neighbor fe80::1 % 'dn42-jomat' as 64773;
 };
 
-protocol bgp dn42_chaossbg from dnpeers {
-  neighbor fe80::1 % 'dn42-chaossbg' as 4242421420;
-};
-
 protocol bgp dn42_twink0r from dnpeers {
   neighbor fe80::1 % 'dn42-twink0r' as 4242421339;
 }
@@ -797,26 +789,9 @@ include "${ffpkgs.icvpn-bird}/peers6";
         ${pkgs.iproute}/bin/ip link set dn42-jomat up
       '';
     };
-    "dn42-chaossbg" = {
-      protocol = "nacltai";
-      tunMode = 1;
-      remoteAddress = "2a02:180:1:1::517:f77";
-      localAddress = "2001:608:a01::1";
-      localPort = 42002;
-      remotePort = 42002;
-      privateKey = secrets.quicktun.chaossbg;
-      publicKey = "8def7bdbfb32d4efb47c4adca8a0bce477207a4d07a222333f5a63ffffbd2053";
-      upScript = ''
-        ${pkgs.iproute}/bin/ip addr replace 10.80.32.13 peer 172.23.171.30 dev dn42-chaossbg
-        ${pkgs.iproute}/bin/ip addr replace fe80::2/64 dev dn42-chaossbg
-        ${pkgs.iproute}/bin/ip link set dn42-chaossbg up
-      '';
-    };
   };
 
   services.openvpn.servers.airvpn = secrets.openvpn.airvpn;
-  #services.openvpn.servers.dn42-ffm-ixp = secrets.openvpn.dn42-ffm-ixp;
-  #services.openvpn.servers.dn42-ixp-nl-zuid = secrets.openvpn.dn42-ixp-nl-zuid;
   services.openvpn.servers.dn42-twink0r = secrets.openvpn.dn42-twink0r;
   services.openvpn.servers.dn42-fbnw = secrets.openvpn.dn42-fbnw;
   services.openvpn.servers.dn42-w0h = secrets.openvpn.dn42-w0h;
