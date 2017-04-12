@@ -440,6 +440,7 @@ in
                 interface=br-${name}
               '')}
               port = 0
+              log-async = 100
               dhcp-option=6,10.80.32.13
 
               dhcp-ignore-names
@@ -474,6 +475,7 @@ in
                 num-threads: 8
                 outgoing-range: 8192
                 num-queries-per-thread: 4096
+                prefer-ip6: yes
 
                 msg-cache-slabs: 8
                 rrset-cache-slabs: 8
@@ -484,13 +486,13 @@ in
                 rrset-cache-size: 512m
                 msg-cache-size: 256m
 
-                # Larger socket buffer.  OS may need config.
+                # Larger socket buffer
                 so-rcvbuf: 4m
                 so-sndbuf: 4m
 
-                cache-min-ttl: 10
+                cache-min-ttl: 60
                 cache-max-ttl: 86400
-                cache-max-negative-ttl: 60
+                cache-max-negative-ttl: 30
                 qname-minimisation: yes
                 prefetch: yes
                 hide-version: yes
