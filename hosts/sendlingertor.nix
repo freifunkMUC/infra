@@ -42,13 +42,15 @@ in
     ];
     ip6 = [
       { address = "2001:608:a01::3"; prefixLength = 64; }
+      { address = "2001:608:a01::54"; prefixLength = 64; }
     ];
   };
   networking.defaultGateway = "195.30.94.30";
   networking.defaultGateway6 = "2001:608:a01::ffff";
   networking.nameservers = [ "2001:608:a01::53" ];
 
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 53 80 443 ];
+  networking.firewall.allowedUDPPorts = [ 53 ];
 
   services.nginx = rec {
     enable = true;
@@ -331,4 +333,31 @@ in
       };
     };
 
+  services.unbound = {
+    enable = true;
+    allowedAccess = [ "::/0" "0.0.0.0/0" ];
+    interfaces = [ "2001:608:a01::54" "195.30.94.28" ];
+    extraConfig = ''
+      include: /run/nodes/unbound.cfg
+    '';
+  };
+
+  systemd.services.nodes2unbound = {
+    script = ''
+      mkdir -p /run/nodes
+      cd /tmp
+      ${pkgs.wget}/bin/wget -O nodes.json https://data.ffmuc.net/nodes.json
+      ${pkgs.python}/bin/python ${../scripts/nodes2unbound.py} > /run/nodes/unbound.cfg
+      systemctl restart unbound
+    '';
+    serviceConfig.PrivateTmp = true;
+  };
+
+  systemd.timers.nodes2unbound = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "hourly";
+      Unit = "nodes2unbound.service";
+    };
+  };
 }

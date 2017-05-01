@@ -506,6 +506,17 @@ in
                 local-data-ptr: "10.80.32.13 isartor.ffmuc.net"
                 local-data-ptr: "2001:608:a01::31 ipv6.space.ffmuc.net"
 
+                local-zone: "1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa" nodefault
+                local-zone: "f.f.f.4.0.c.f.f.f.e.d.f.ip6.arpa" nodefault
+
+              forward-zone:
+                name: "1.0.a.0.8.0.6.0.1.0.0.2.ip6.arpa"
+                forward-addr: 2001:608:a01::54
+
+              forward-zone:
+                name: "f.f.f.4.0.c.f.f.f.e.d.f.ip6.arpa"
+                forward-addr: 2001:608:a01::54
+
               remote-control:
                 control-enable: yes
                 control-use-cert: no
