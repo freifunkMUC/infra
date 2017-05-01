@@ -739,14 +739,6 @@ protocol bgp dn42_twink0r from dnpeers {
   neighbor fe80::1 % 'dn42-twink0r' as 4242421339;
 }
 
-protocol bgp dn42_fbnw from dnpeers {
-  neighbor fe80::2 % 'dn42-fbnw' as 4242423955;
-}
-
-protocol bgp dn42_w0h from dnpeers {
-  neighbor fe80::7fc9 % 'dn42-w0h' as 4242420013;
-}
-
 include "${ffpkgs.icvpn-bird}/peers6";
       '';
     };
