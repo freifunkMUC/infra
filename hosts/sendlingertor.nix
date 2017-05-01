@@ -178,6 +178,7 @@ in
         "-storage.local.index-cache-size.fingerprint-to-timerange 1048576"
         "-storage.local.index-cache-size.label-name-to-label-values 2097152"
         "-storage.local.index-cache-size.label-pair-to-fingerprints 41943040"
+        "-query.max-concurrency 1000"
       ];
       alertmanagerURL = [ "http://localhost:9093/alertmanager" ];
       rules = [

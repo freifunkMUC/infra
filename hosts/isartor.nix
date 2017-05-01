@@ -229,6 +229,7 @@ in
 
   networking = {
     hostName = "isartor";
+    interfaces.eno1 = {};
     interfaces.eno2 = {
       ip4 = [ { address = "195.30.94.27"; prefixLength = 29; } ];
       ip6 = [
