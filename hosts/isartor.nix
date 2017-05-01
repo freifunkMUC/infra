@@ -653,14 +653,6 @@ protocol bgp dn42_twink0r from dnpeers {
   neighbor 172.20.11.1 as 4242421339;
 }
 
-protocol bgp dn42_fbnw from dnpeers {
-  neighbor 172.22.78.30 as 4242423955;
-}
-
-protocol bgp dn42_w0h from dnpeers {
-  neighbor 172.22.232.1 as 4242420013;
-}
-
 include "${ffpkgs.icvpn-bird}/peers4";
       '';
     };
@@ -793,8 +785,6 @@ include "${ffpkgs.icvpn-bird}/peers6";
 
   services.openvpn.servers.airvpn = secrets.openvpn.airvpn;
   services.openvpn.servers.dn42-twink0r = secrets.openvpn.dn42-twink0r;
-  services.openvpn.servers.dn42-fbnw = secrets.openvpn.dn42-fbnw;
-  services.openvpn.servers.dn42-w0h = secrets.openvpn.dn42-w0h;
 
   services.nginx =
     { enable = true;
