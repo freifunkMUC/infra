@@ -7,6 +7,8 @@
     <nixpkgs/nixos/modules/profiles/qemu-guest.nix>
   ];
 
+  boot.loader.grub.devices = [ "/dev/vda" ];
+
   networking = {
     hostName = "testgw";
     dhcpcd.allowInterfaces = [ "eth0" ];
@@ -37,8 +39,8 @@
           };
         };
         portBalancings = [
-          { from = 10000; to = 10099; }
-          { from = 10001; to = 10098; }
+          { from = 10000; to1 = 10099; to2 = 10098; }
+          { from = 10001; to1 = 10097; to2 = 10096; }
         ];
       };
       ffoo = {
@@ -60,7 +62,7 @@
           };
         };
         portBalancings = [
-          { from = 10010; to = 10089; }
+          { from = 10010; to1 = 10089; to2 = 10088; }
         ];
       };
     };

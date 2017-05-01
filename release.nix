@@ -1,8 +1,8 @@
-{ onlySystem ? true, extraModules ? [] }:
+{ nixpkgs ? <nixpkgs>, onlySystem ? true, extraModules ? [] }:
 
 let
 
-  nixos = import <nixpkgs/nixos>;
+  nixos = import "${nixpkgs}/nixos";
 
   buildEnv = conf: (nixos {
     configuration = conf;
