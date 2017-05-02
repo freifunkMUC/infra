@@ -76,6 +76,8 @@ in
       ip route replace 195.30.94.48/28 via 195.30.94.26 table 42
       ip route replace 195.30.94.24/29 dev eno2 table 42
 
+      ip route replace 2001:608:a01:1::/64 via 2001:608:a01::3
+
       ${pkgs.ethtool}/bin/ethtool --offload eno2 gro off
       ${pkgs.kmod}/bin/modprobe jool pool6=2001:608:a01:0:64:ff9b::/96
     '';
@@ -280,6 +282,8 @@ in
       ip46tables -I FORWARD 1 -i tinc.icvpn -o dn42-+ -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i dn42-+ -o dn42-+ -j ACCEPT
+
+      ip46tables -I FORWARD 1 -i eno2 -o eno2 -d 2001:608:a01:1::/64 -j ACCEPT
 
       # main dns recursor and cache for infrastructure
       ip6tables -I nixos-fw 3 -s 2001:608:a01::/48 -d 2001:608:a01::53 -p udp --dport 53 -j nixos-fw-accept
