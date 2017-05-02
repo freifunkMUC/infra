@@ -17,6 +17,11 @@ in
   boot.supportedFilesystems = [ "zfs" ];
   boot.kernelParams = [ "console=ttyS0,115200" ];
 
+  boot.kernel.sysctl = {
+    "net.ipv4.ip_forward" = 1;
+    "net.ipv6.conf.all.forwarding" = 1;
+  };
+
   fileSystems."/" =
     { device = "tank/root";
       fsType = "zfs";
@@ -49,8 +54,21 @@ in
   networking.defaultGateway6 = "2001:608:a01::ffff";
   networking.nameservers = [ "2001:608:a01::53" ];
 
-  networking.firewall.allowedTCPPorts = [ 53 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 53 80 443 6697 ];
   networking.firewall.allowedUDPPorts = [ 53 ];
+
+  networking.firewall.extraCommands = ''
+    ip46tables -F FORWARD
+    ip46tables -P FORWARD DROP
+    ip46tables -I FORWARD -i ve-+ -j ACCEPT
+    ip46tables -I FORWARD -o ve-+ -j ACCEPT
+  '';
+
+  networking.nat = {
+    enable = true;
+    internalIPs = [ "10.255.255.0/24" ];
+    externalIP = "195.30.94.28";
+  };
 
   services.nginx = rec {
     enable = true;
@@ -83,6 +101,14 @@ in
           "/.metrics/node/" = {
             proxyPass = "http://[::1]:9100/";
           };
+        };
+      };
+      "chat.ffmuc.net" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://mattermost.containers:8065";
+          proxyWebsockets = true;
         };
       };
       "prometheus.ffmuc.net" = {
@@ -360,5 +386,48 @@ in
       OnCalendar = "hourly";
       Unit = "nodes2unbound.service";
     };
+  };
+
+  containers.mattermost = {
+    autoStart = true;
+    privateNetwork = true;
+    hostAddress = "195.30.94.28";
+    hostAddress6 = "2001:608:a01::3";
+    #localAddress = "195.30.94.51";
+    localAddress = "10.255.255.1";
+    localAddress6 = "2001:608:a01:1::6667";
+    config = {
+      networking.firewall.extraCommands = ''
+        iptables -I nixos-fw 3 -s 195.30.94.28 -j ACCEPT
+      '';
+      services.mattermost = {
+        enable = true;
+        siteName = "Freifunk München Mattermost";
+        siteUrl = "https://chat.ffmuc.net/";
+        mutableConfig = true;
+        localDatabaseCreate = false;
+      };
+      systemd.services.mattermost.serviceConfig = {
+        LimitNOFiles = 10240;
+      };
+      services.mysql = {
+        enable = true;
+        package = pkgs.mariadb;
+      };
+    };
+  };
+
+  services.mattermost.matterircd = {
+    enable = true;
+    parameters = [
+      "-mmserver chat.ffmuc.net"
+      "-mmteam freifunk"
+      "-tlsbind [::]:6697"
+      "-tlsdir /var/lib/acme/chat.ffmuc.net"
+    ];
+  };
+  systemd.services.matterircd.serviceConfig = {
+    User = lib.mkForce "nginx";
+    Group = lib.mkForce "nginx";
   };
 }
