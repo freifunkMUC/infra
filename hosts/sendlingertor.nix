@@ -430,4 +430,62 @@ in
     User = lib.mkForce "nginx";
     Group = lib.mkForce "nginx";
   };
+
+  containers.git = {
+    autoStart = true;
+    privateNetwork = true;
+    hostAddress = "195.30.94.28";
+    hostAddress6 = "2001:608:a01::3";
+    #localAddress = "195.30.94.51";
+    localAddress = "10.255.255.2";
+    localAddress6 = "2001:608:a01:1::91f";
+    config = {
+      networking.firewall = {
+        allowedTCPPorts = [ 22 80 443 ];
+      };
+      services.nginx = {
+        enable = true;
+        package = pkgs.nginxUnstable;
+        recommendedOptimisation = true;
+        recommendedTlsSettings = true;
+        recommendedGzipSettings = true;
+        recommendedProxySettings = true;
+        virtualHosts."git.ffmuc.net" = {
+          enableACME = true;
+          forceSSL = true;
+          locations = {
+            "/".proxyPass = "http://unix:/run/gitlab/gitlab-workhorse.socket";
+            "/gravatar/".proxyPass = "https://secure.gravatar.com/avatar/";
+          };
+        };
+      };
+      services.openssh = {
+        enable = true;
+        hostKeys = [
+          { type = "ed25519"; path = "/etc/ssh/ssh_host_ed25519_key"; }
+          { type = "rsa"; path = "/etc/ssh/ssh_host_rsa_key"; }
+        ];
+      };
+      services.gitlab = {
+        enable = true;
+        user = "git";
+        https = true;
+        port = 443;
+        host = "git.ffmuc.net";
+        inherit (secrets.git) databasePassword secrets;
+        extraConfig = {
+          gitlab = {
+            email_from = "gitlab-no-reply@ffmuc.net";
+            email_display_name = "FFMUC GitLab";
+            email_reply_to = "gitlab-no-reply@ffmuc.net";
+            time_zone = "Berlin";
+          };
+          gravatar = {
+            enabled = true;
+            ssl_url = "https://git.ffmuc.net/gravatar/%{hash}?s=%{size}&d=identicon";
+          };
+        };
+      };
+    };
+   };
 }
