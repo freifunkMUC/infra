@@ -13,7 +13,7 @@
             "kernel.panic" = 1;
           };
         tmpOnTmpfs = true;
-        kernelPackages = pkgs.linuxPackages_4_10;
+        kernelPackages = pkgs.linuxPackages_4_11;
         loader =
           { timeout = lib.mkDefault 1;
             grub.splashImage = null;

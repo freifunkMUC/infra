@@ -27,6 +27,7 @@
         cpuFreqGovernor = "ondemand";
       };
 
+    hardware.enableAllFirmware = false;
     hardware.firmware = with pkgs; [ firmwareLinuxNonfree ];
 
   };

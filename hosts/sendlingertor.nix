@@ -7,7 +7,6 @@ in
 
 {
   imports = [
-    <nixpkgs/nixos/modules/installer/scan/not-detected.nix>
     ../modules/default.nix
     ../modules/physical.nix
   ];
