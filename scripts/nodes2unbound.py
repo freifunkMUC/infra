@@ -22,10 +22,11 @@ print '  local-data: "node.ffmuc.net. 600 IN SOA ns.node.ffmuc.net. admin.ffmuc.
 print ''
 
 for (nodeid, host, addrs) in hosts:
-    for addr in addrs:
-        for h in [ nodeid, host ]:
-            try:
-                print '  local-data: "%s.node.ffmuc.net. 600 IN AAAA %s"' % (h, addr)
-                print '  local-data-ptr: "%s %s.node.ffmuc.net"' % (addr, h)
-            except UnicodeEncodeError:
-                pass
+  for addr in addrs:
+    for h in [ nodeid, host ]:
+      try:
+        if not addr.startswith('fd'):
+          print '  local-data: "%s.node.ffmuc.net. 600 IN AAAA %s"' % (h, addr)
+        print '  local-data-ptr: "%s %s.node.ffmuc.net"' % (addr, h)
+      except UnicodeEncodeError:
+        pass
