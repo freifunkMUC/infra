@@ -184,8 +184,8 @@ in
             "net.ipv6.conf.all.forwarding" = 1;
             "net.ipv6.conf.all.use_tempaddr" = 0;
             "net.ipv6.conf.default.use_tempaddr" = 0;
-            "net.ipv4.conf.default.rp_filter" = 2;
-            "net.ipv4.conf.all.rp_filter" = 2;
+            "net.ipv4.conf.default.rp_filter" = 0;
+            "net.ipv4.conf.all.rp_filter" = 0;
             # Increase Linux autotuning TCP buffer limits
             "net.core.rmem_max" = 33554432;
             "net.core.wmem_max" = 33554432;
