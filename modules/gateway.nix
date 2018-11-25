@@ -219,7 +219,7 @@ in
             "net.ipv4.conf.all.accept_source_route" = 0;
             "net.ipv6.conf.all.accept_source_route" = 0;
             # Log martian packets
-            "net.ipv4.conf.all.log_martians" = 1;
+            "net.ipv4.conf.all.log_martians" = 0;
             # Decrease connection tracking timeouts
             "net.netfilter.nf_conntrack_generic_timeout" = 300;
             "net.netfilter.nf_conntrack_expect_max" = 8192;
