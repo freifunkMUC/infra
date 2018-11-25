@@ -457,6 +457,7 @@ in
               server=2001:608:a01::53
 
               enable-tftp
+              dhcp-authoritative
               tftp-root=/var/lib/tftp
               tftp-secure
               dhcp-match=set:ipxe,175
