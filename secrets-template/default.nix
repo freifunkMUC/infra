@@ -26,7 +26,7 @@
       config = ''
         ...
       '';
-      up = "ip route replace default via 10.4.0.1 dev $1 metric 42 table 42";
+      up = "ip route replace default via $route_vpn_gateway dev $1 metric 42 table 42";
     };
   };
 
