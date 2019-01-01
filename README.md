@@ -1,5 +1,7 @@
 # Freifunk München Infrastructure
 
+# REPO DEPRECATED AND NO LONGER MAINTAINED
+
 These are the [NixOS](https://nixos.org) configurations for the
 infrastructure of Freifunk München.
 
