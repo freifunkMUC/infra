@@ -272,9 +272,8 @@ in
     nameservers = [ "2001:608:a01::53" ];
 
     firewall.allowedTCPPorts = [ 80 443 655 ];
-    firewall.allowedUDPPorts = [ 123 10100 655 42000 42001 42002 42003 42004 42005 547 ];
+    firewall.allowedUDPPorts = [ 123 655 42000 42001 42002 42003 42004 42005 547 ];
     firewall.extraCommands = ''
-      ip6tables -I nixos-fw 3 -i fastd-babel -m pkttype --pkt-type multicast -j nixos-fw-accept
       ip46tables -I FORWARD 1 -i br-+ -o tinc.icvpn -j ACCEPT
       ip46tables -I FORWARD 1 -i tinc.icvpn -o br-+ -j ACCEPT
       ip46tables -I FORWARD 1 -i br-+ -o dn42-+ -j ACCEPT
@@ -298,7 +297,7 @@ in
   };
 
    environment.systemPackages = with pkgs; [
-     tinc_pre babeld jool-cli
+     tinc_pre jool-cli
    ];
 
   systemd.services = {
@@ -328,8 +327,7 @@ in
             "ifaces": [
               "br-ffmuc",
               "br-umland",
-              "br-welcome",
-              "fastd-babel"
+              "br-welcome"
             ],
             "storage": {
               "file": "./raw.json"
@@ -359,61 +357,6 @@ in
     };
 
     openvpn-airvpn.serviceConfig.CPUAffinity = "0";
-
-    fastd-babel = {
-      description = "fastd tunneling daemon for babel";
-      wantedBy = [ "network.target" "multi-user.target" ];
-      after = [ "network.target" ];
-      preStart = ''
-        mkdir -p /run/fastd
-        rm -f /run/fastd/babel.sock
-        chown nobody:nogroup /run/fastd
-      '';
-      serviceConfig = {
-        ExecStart = ''
-          ${ffpkgs.fastd}/bin/fastd -c ${pkgs.writeText "fastd-babel.conf" ''
-            user "nobody";
-            group "nogroup";
-            status socket "/run/fastd/babel.sock";
-            log level verbose;
-            mode tap;
-            interface "fastd-babel";
-            mtu 1280;
-            bind 195.30.94.27:10100;
-            bind [2001:608:a01::1]:10100;
-            method "salsa2012+umac";
-            method "null";
-            on verify "true";
-            on up "${pkgs.iproute}/bin/ip link set fastd-babel up; ${pkgs.iproute}/bin/ip addr add 2001:608:a01:bfff::1/64 dev fastd-babel";
-            secret "${secrets.fastd.gw03.secret}";
-          ''}
-        '';
-      };
-    };
-    babeld = let
-      babeldConf = pkgs.writeText "babeld.conf" ''
-        redistribute ip 2001:608:a01::/64 le 127 deny
-        redistribute ip ::/0 le 0 proto 3 metric 128
-        redistribute ip 2001:608:a01::/48 le 127 metric 128
-        redistribute ip fdef:ffc0:4fff::/48 le 127 metric 128
-
-        # only redistribute nets matching the filters above
-        redistribute local deny
-        redistribute deny
-
-        # Don't accept default routes
-        in ip 0.0.0.0/0 le 0 deny
-        in ip ::/0 le 0 deny
-      '';
-      in {
-        description = "Babel routing daemon";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "fastd-babel.service" ];
-        serviceConfig = {
-          ExecStart =
-            "${pkgs.babeld}/bin/babeld -c ${babeldConf} fastd-babel";
-        };
-      };
 
     kea-dhcp6 = let
       keaConf = pkgs.writeText "kea6.json" ''
@@ -467,27 +410,6 @@ in
         };
       };
   };
-
-  services.dhcpd6 =
-    { enable = true;
-      interfaces = [ "fastd-babel" ];
-      configFile = pkgs.writeText "dhpcd.conf" ''
-        authoritative;
-        log-facility local1;
-        default-lease-time 600;
-        max-lease-time 7200;
-
-        #option dhcp-renewal-time 3600;
-        #option dhcp-rebinding-time 7200;
-
-        option dhcp6.name-servers 2001:608:a01:bfff::1;
-
-        subnet6 2001:608:a01:b000::/52 {
-          range6 2001:608:a01:b000:f000:: 2001:608:a01:bfff:ffff::;
-          prefix6 2001:608:a01:b000:: 2001:608:a01:bffe:: / 64;
-        }
-      '';
-    };
 
   services.chrony =
     { extraConfig = ''

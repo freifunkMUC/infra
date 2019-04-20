@@ -271,10 +271,6 @@ in
             '') scfg.portBalancings))}
 
           '' + (optionalString cfg.isRouter ''
-            ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 547 -j nixos-fw-accept
-            ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 547 -j nixos-fw-accept
-            ip6tables -I nixos-fw 3 -i fastd-babel -p udp --dport 53 -j nixos-fw-accept
-            ip6tables -I nixos-fw 3 -i fastd-babel -p tcp --dport 53 -j nixos-fw-accept
 
             iptables -t mangle -F PREROUTING
 
@@ -291,10 +287,6 @@ in
             '')}
 
             ip46tables -A FORWARD -i br-+ -o br-+ -j ACCEPT
-            ip6tables -A FORWARD -i fastd-babel -o br-+ -j ACCEPT
-            ip6tables -A FORWARD -i br-+ -o fastd-babel -j ACCEPT
-            ip6tables -A FORWARD -s 2001:608:a01:b000::/52 -i fastd-babel -o ${cfg.ip6Interface} -j ACCEPT
-            ip6tables -A FORWARD -d 2001:608:a01:b000::/52  -i ${cfg.ip6Interface} -o fastd-babel -j ACCEPT
             ${concatSegments (name: scfg: ''
               ip6tables -A FORWARD -i br-${name} -o ${cfg.ip6Interface} -j ACCEPT
               ip6tables -A FORWARD -i ${cfg.ip6Interface} -o br-${name} -j ACCEPT
@@ -526,17 +518,7 @@ in
             '';
           };
         radvd = let
-          config = ''
-            interface fastd-babel {
-              AdvSendAdvert on;
-              AdvManagedFlag on;
-              MaxRtrAdvInterval 30;
-              prefix 2001:608:a01:bfff::/64 {
-                  AdvValidLifetime 600;
-                  AdvPreferredLifetime 150;
-              };
-            };
-          '' + (concatSegments (name: scfg:
+          config = concatSegments (name: scfg:
             lib.optionalString (scfg.ra.prefixes != []) ''
               interface br-${name} {
                 AdvSendAdvert on;
@@ -557,7 +539,7 @@ in
                       };
                 '') scfg.ra.rdnss)}
               };
-          ''));
+          '');
           in
           { enable = (config != "");
             inherit config;
