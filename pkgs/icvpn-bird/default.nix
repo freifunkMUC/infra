@@ -18,8 +18,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "freifunk";
     repo = "icvpn-meta";
-    rev = "466056b34c6b7f69de7002e6e48d4f6eae001c3c";
-    sha256 = "0zbwl155bvj797g0rgywqwqp13iym3bicm3n2qzn256ypny4qy30";
+    rev = "59e8b288049731c9c89769837bcefc012356013d";
+    sha256 = "195cgd3w0jh9rihxvmm18pllqhns52gxh92s6skxw5q1qnfd08wi";
   };
 
   phases = [ "unpackPhase" "buildPhase" ];
